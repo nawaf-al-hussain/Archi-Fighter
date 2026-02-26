@@ -1,0 +1,14 @@
+{
+  "name": "archi-fighter",
+  "version": "1.0.0",
+  "description": "Street fighter game with architects",
+  "scripts": {
+    "dev": "concurrently --names \"SERVER,CLIENT\" --prefix-colors \"blue,green\" \"cd server && deno run --allow-net --allow-read --allow-write --allow-env server.ts\" \"cd client && npm run serve\"",
+    "start": "npm run dev",
+    "server": "cd server && deno run --allow-net --allow-read --allow-write --allow-env server.ts",
+    "client": "cd client && npm run serve"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

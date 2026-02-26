@@ -1,0 +1,14 @@
+{
+  "name": "archi-fighter-client",
+  "version": "1.0.0",
+  "description": "Street fighter game with architects - client side",
+  "scripts": {
+    "serve": "npx http-server -p 8080 -c-1",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0"
+  }
+}
