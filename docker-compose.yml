@@ -1,0 +1,27 @@
+services:
+  archi_fighter_postgres:
+    image: postgres:18.1
+    container_name: archi_fighter-postgres
+    restart: unless-stopped
+    volumes:
+      - archi_fighter_postgres-data:/var/lib/postgresql
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      - archi_fighter-network
+    ports:
+      - "5432:5432"
+
+networks:
+  archi_fighter-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
+
+volumes:
+  archi_fighter_postgres-data:
+    driver: local
