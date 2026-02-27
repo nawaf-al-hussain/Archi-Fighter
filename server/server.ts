@@ -1,5 +1,7 @@
 import { Application, Router } from "oak";
 import "@std/dotenv/load";
+import { db } from "./database/database.ts";
+import { runMigrations } from "./database/migrations.ts";
 
 const router = new Router();
 const app = new Application();
@@ -24,5 +26,8 @@ app.use(router.allowedMethods());
 
 console.log("Hi from the server I am working fine");
 console.log(`%cServer is running at: ${serverUrl}`, "color:yellow");
+
+await db.connect();
+await runMigrations();
 
 await app.listen({ port });

@@ -64,7 +64,38 @@ npm run client
   assets/
 
 /server
-  server.ts
+  server.ts                    # Entry: registers routes + WS handler
+
+  /database
+    database.ts                # DatabaseHandler class
+
+  /models
+    character.model.ts         # Character shape + DB queries (getAll, getById...)
+    player.model.ts            # Player shape + DB queries
+    match.model.ts             # Match result, history
+
+  /controllers
+    character.controller.ts    # Calls model, returns response
+    player.controller.ts
+    match.controller.ts
+
+  /routes
+    character.routes.ts        # GET /characters, GET /characters/:id
+    player.routes.ts           # POST /players, GET /players/:id
+    match.routes.ts            # GET /matches/history
+    index.ts                   # Aggregates all routers into one
+
+  /game
+    game.session.ts            # One live 1v1 match (state, timer, health)
+    game.engine.ts             # Validates inputs, applies physics/damage
+    ai.ts                      # AI opponent decision making
+
+  /websocket
+    ws.handler.ts              # Upgrades connection, routes WS events
+    ws.events.ts               # Event types: MOVE, ATTACK, STATE_UPDATE...
+
+  /types
+    types.ts                   # Shared interfaces: Character, Player, GameState
 ```	
 
 # Future Improvements:

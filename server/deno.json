@@ -1,12 +1,13 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-read --allow-write --allow-env --env-file=../.env --watch server.ts",
-    "start": "deno run --allow-net --allow-read --allow-write --allow-env server.ts"
+    "start": "deno run --allow-net --allow-read --allow-write --allow-env server.ts",
+    "db:migrate": "deno run --allow-net --allow-read --allow-env --env-file=../.env database/migrations.ts",
+    "db:seed": "deno run --allow-net --allow-read --allow-env --env-file=../.env database/seeder.ts"
   },
   "imports": {
     "@db/postgres": "jsr:@db/postgres@^0.19.5",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.6",
-    "mod": "npm:mod@^0.0.0",
     "oak": "https://deno.land/x/oak@v12.6.1/mod.ts",
     "websocket": "https://deno.land/std@0.208.0/ws/mod.ts"
   }
