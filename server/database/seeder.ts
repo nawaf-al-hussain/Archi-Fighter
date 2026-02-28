@@ -12,6 +12,12 @@ const characters = [
   { name: "Renzo Piano",        health: 120, speed: 0.8, attack: 0.8, defense: 1.5, sprite_key: "piano"     },
 ];
 
+const maps = [
+  { name: "Paris",   sprite_key: "map_paris"   },
+  { name: "Berlin",  sprite_key: "map_berlin"  },
+  { name: "Brasilia", sprite_key: "map_brasilia" },
+];
+
 export async function runSeeds() {
   for (const c of characters) {
     await db.query(
@@ -21,6 +27,16 @@ export async function runSeeds() {
       [c.name, c.health, c.speed, c.attack, c.defense, c.sprite_key]
     );
   }
+
+  for (const m of maps) {
+    await db.query(
+      `INSERT INTO maps (name, sprite_key)
+       VALUES ($1, $2)
+       ON CONFLICT (name) DO NOTHING`,
+      [m.name, m.sprite_key]
+    );
+  }
+
   console.log("%cSeeds complete.", "color:green");
 }
 

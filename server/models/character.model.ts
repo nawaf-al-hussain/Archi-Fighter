@@ -18,7 +18,7 @@ export class CharacterModel extends BaseModel<Character> {
 			[name]
 		);
 		return rows[0] ?? null;
-	}
+	} 
 
 }
 
