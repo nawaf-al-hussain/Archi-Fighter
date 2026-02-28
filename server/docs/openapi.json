@@ -1,0 +1,272 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Archi-Fighter API",
+    "description": "REST API for Archi-Fighter — a street fighter game featuring architect characters. Players are anonymous: register with a pseudo to receive a UUID token stored client-side, then use it to authenticate.",
+    "version": "1.0.0",
+    "contact": {
+      "email": "contact@pauljaguin.com"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "UUID",
+        "description": "UUID token returned on player creation. Store in localStorage and send as `Authorization: Bearer <token>`."
+      }
+    },
+    "schemas": {
+      "Character": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "integer",           "example": 1 },
+          "name":       { "type": "string",            "example": "Le Corbusier" },
+          "health":     { "type": "integer",           "example": 100 },
+          "speed":      { "type": "number", "format": "float", "example": 1.0 },
+          "attack":     { "type": "number", "format": "float", "example": 1.0 },
+          "defense":    { "type": "number", "format": "float", "example": 1.0 },
+          "sprite_key": { "type": "string",            "example": "corbusier" }
+        }
+      },
+      "Map": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "integer", "example": 1 },
+          "name":       { "type": "string",  "example": "Paris" },
+          "sprite_key": { "type": "string",  "example": "map_paris" }
+        }
+      },
+      "Player": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "integer",                    "example": 1 },
+          "pseudo":     { "type": "string",                     "example": "Archi42" },
+          "token":      { "type": "string", "format": "uuid",   "example": "550e8400-e29b-41d4-a716-446655440000" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Character not found" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid Authorization header",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "Missing or invalid Authorization header" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Server status",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Server is running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Archi-Fighter Server" },
+                    "status":  { "type": "string", "example": "running" },
+                    "client":  { "type": "string", "example": "http://localhost:8080" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/characters": {
+      "get": {
+        "summary": "Get all characters",
+        "description": "Returns the full roster of playable architect characters with their combat stats.",
+        "tags": ["Characters"],
+        "responses": {
+          "200": {
+            "description": "List of all characters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Character" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/characters/{id}": {
+      "get": {
+        "summary": "Get character by id",
+        "tags": ["Characters"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Character id",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Character found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Character" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/maps": {
+      "get": {
+        "summary": "Get all maps",
+        "description": "Returns all available battle arenas.",
+        "tags": ["Maps"],
+        "responses": {
+          "200": {
+            "description": "List of all maps",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Map" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/maps/{id}": {
+      "get": {
+        "summary": "Get map by id",
+        "tags": ["Maps"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Map id",
+            "schema": { "type": "integer", "example": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Map found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Map" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/players": {
+      "post": {
+        "summary": "Create anonymous player",
+        "description": "Registers a new anonymous player by pseudo. Returns a UUID token — store it client-side (localStorage) and use it as a Bearer token for authenticated routes.",
+        "tags": ["Players"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pseudo"],
+                "properties": {
+                  "pseudo": { "type": "string", "example": "Archi42" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Player created — save the token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Player" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/players/me": {
+      "get": {
+        "summary": "Get current player",
+        "description": "Returns the player profile associated with the Bearer token.",
+        "tags": ["Players"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Player profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Player" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Health",     "description": "Server health check" },
+    { "name": "Characters", "description": "Playable architect characters" },
+    { "name": "Maps",       "description": "Battle arena maps" },
+    { "name": "Players",    "description": "Anonymous player management" }
+  ]
+}

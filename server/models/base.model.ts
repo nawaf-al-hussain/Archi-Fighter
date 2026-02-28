@@ -9,7 +9,8 @@ export abstract class BaseModel<T> {
 
   async getById(id: number): Promise<T | null> {
     const rows = await db.query<T>(
-      `SELECT * FROM ${this.table} WHERE id = ${id}`
+      `SELECT * FROM ${this.table} WHERE id = $1`,
+      [id]
     );
     return rows[0] ?? null;
   }

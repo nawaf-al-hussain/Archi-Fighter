@@ -24,7 +24,7 @@ export async function runMigrations() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS players (
       id         SERIAL PRIMARY KEY,
-      pseudo     TEXT  NOT NULL UNIQUE,
+      pseudo     TEXT  NOT NULL,
       token      TEXT  NOT NULL UNIQUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -77,6 +77,12 @@ export async function runMigrations() {
   await db.query(`
     ALTER TABLE images
     ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'general'
+  `);
+
+  // Allow duplicate pseudos — pseudo is a display name, not a unique identifier
+  await db.query(`
+    ALTER TABLE players
+    DROP CONSTRAINT IF EXISTS players_pseudo_key
   `);
 
   console.log("%cMigrations complete.", "color:green");
