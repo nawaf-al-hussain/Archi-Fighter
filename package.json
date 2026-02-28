@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Street fighter game with architects",
   "scripts": {
-    "dev": "concurrently --names \"POSGRES,SERVER,CLIENT\" --prefix-colors \"blue,green\" \"docker compose up -d\" \"cd server && deno run --allow-net --allow-read --allow-write --allow-env server.ts\" \"cd client && npm run serve\"",
+    "dev": "concurrently --names \"POSTGRES,SERVER,CLIENT\" --prefix-colors \"blue,green,cyan\" \"docker compose up -d\" \"cd server && deno task dev\" \"cd client && npm run serve\"",
     "start": "npm run dev",
-    "server": "cd server && deno run --allow-net --allow-read --allow-write --allow-env server.ts",
+    "server": "cd server && deno task dev",
     "client": "cd client && npm run serve"
   },
   "devDependencies": {

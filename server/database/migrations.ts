@@ -73,6 +73,12 @@ export async function runMigrations() {
     )
   `);
 
+  // Alter table image to add type column for categorization
+  await db.query(`
+    ALTER TABLE images
+    ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'general'
+  `);
+
   console.log("%cMigrations complete.", "color:green");
 }
 

@@ -29,7 +29,7 @@ export interface Player {
  */
 export interface Game {
   id: number;
-  type: "1VS1" | "1VSAI";         // Maybe extended later for more modes like "2VS2" or "FFA"
+  type: string;                   // Could be extended later for more modes like "2VS2" or "FFA"
   status: "pending" | "ongoing" | "finished";
   map_id: number;                 // FK to Map table
   winning_team: 1 | 2 | null;     // Player team that won the game, null while ongoing
@@ -61,6 +61,7 @@ export interface Image {
   id: number;
   file_name: string;              // e.g. "corbusier.png"
   file_path: string;              // e.g. "/assets/sprites/corbusier.png"
+  type: string;                   // type of image for categorization (e.g. "thumbnail", "character", "ui", etc.)
   model_type: string;             // e.g. "character", "map", etc.
   model_id: number;               // id of the associated record
 }
