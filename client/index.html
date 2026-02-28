@@ -1,17 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archi-Fighter - Street Fighter with Architects</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archi-Fighter</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    
-    <div>
-        <div>Starting Archi-Fighter...</div>
+  <!-- Phaser game canvas mounts here -->
+  <div id="game-container"></div>
+
+  <!-- UI overlay (modals rendered outside Phaser) -->
+  <div id="ui-overlay">
+    <!-- Name prompt modal (shown when no token) -->
+    <div id="modal-name" class="modal hidden">
+      <div class="modal-box">
+        <h2>Enter your name</h2>
+        <input id="input-pseudo" type="text" placeholder="Archi42" maxlength="32" autocomplete="off">
+        <button id="btn-confirm-name">Play</button>
+      </div>
     </div>
 
-	<!-- Canva goes here -->
+    <!-- Game mode selection (shown once player is identified) -->
+    <div id="modal-gamemode" class="modal hidden">
+      <div class="modal-box">
+        <h1>Archi-Fighter</h1>
+        <p id="welcome-text"></p>
+        <div class="mode-buttons">
+          <button id="btn-1v1" class="mode-btn">1 vs 1</button>
+          <button id="btn-ai"  class="mode-btn">vs AI</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <script type="module" src="game.js"></script>
 </body>
 </html>

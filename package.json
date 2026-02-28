@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Street fighter game with architects",
   "scripts": {
-    "dev": "concurrently --names \"POSTGRES,SERVER,CLIENT\" --prefix-colors \"blue,green,cyan\" \"docker compose up -d\" \"cd server && deno task dev\" \"cd client && npm run serve\"",
+    "dev": "concurrently --names \"POSTGRES,SERVER,CLIENT\" --prefix-colors \"blue,green,cyan\" \"docker compose up -d\" \"cd server && deno task dev\" \"cd client && npm run dev\"",
     "start": "npm run dev",
     "server": "cd server && deno task dev",
-    "client": "cd client && npm run serve"
+    "client": "cd client && npm run dev"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

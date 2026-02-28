@@ -1,5 +1,5 @@
 import "@std/dotenv/load";
-import { Application, Router } from "oak";
+import { Application } from "oak";
 import { db } from "./database/database.ts";
 import { runMigrations } from "./database/migrations.ts";
 import apiRouter from "./routes/index.ts";
@@ -8,9 +8,24 @@ import docsRouter from "./routes/docs.routes.ts";
 const app = new Application();
 
 const serverPort = Deno.env.get("SERVER_PORT") || "3000";
+const clientPort = Deno.env.get("CLIENT_PORT") || "8080";
+
+// CORS middleware
+app.use((ctx, next) => {
+  ctx.response.headers.set("Access-Control-Allow-Origin", `http://localhost:${clientPort}`);
+  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  // Handle preflight OPTIONS request
+  if (ctx.request.method === "OPTIONS") {
+    ctx.response.status = 204;
+    return;
+  }
+  return next();
+});
 
 // Register router middleware
-app.use(docsRouter.routes());   // GET /docs, GET /openapi.json
+app.use(docsRouter.routes());   // GET /api/v1/docs, GET /api/v1/openapi.json
 app.use(apiRouter.routes());    // GET /api/v1/characters, etc.
 
 console.log("Hi from the server I am working fine");
