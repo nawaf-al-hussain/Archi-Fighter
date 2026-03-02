@@ -57,6 +57,18 @@
           "updated_at": { "type": "string", "format": "date-time" }
         }
       },
+      "PlayerStats": {
+        "type": "object",
+        "properties": {
+          "pseudo":                   { "type": "string",     "example": "Archi42"  },
+          "total_games":              { "type": "number",     "example": "548"  },
+          "games_won":                { "type": "number",     "example": 1  },
+          "games_lost":               { "type": "number",     "example": 20 },
+          "win_rate":                 { "type": "number",     "example": 0.5 },
+          "toughest_opponent":        { "type": "string",     "example": "Le Corbusier" },
+          "toughest_opponent_losses": { "type": "number",     "example": 20 }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -254,6 +266,59 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Player" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "summary": "Update current player's pseudo",
+        "description": "Change the pseudo of the player associated with the Bearer token.",
+        "tags": ["Players"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pseudo"],
+                "properties": {
+                  "pseudo": { "type": "string", "example": "Archi42" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Player updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Player" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/players/me/stats": {
+      "get": {
+        "summary": "Get the current player statistics",
+        "description": "Returns all the key figures from the game previously played",
+        "tags": ["Players"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Player statistics",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PlayerStats" }
               }
             }
           },

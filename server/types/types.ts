@@ -22,6 +22,16 @@ export interface Player {
   updated_at: string;             // ISO timestamp
 }
 
+export interface PlayerStats {
+  pseudo: string;
+  total_games: number;
+  games_won: number;
+  games_lost: number;
+  win_rate: number;
+  toughest_opponent: string | null;
+  toughest_opponent_losses: number;
+}
+
 /**
  * Represents a game session, which can be a 1v1 match against another player or an AI opponent.
  * The 'type' field indicates the mode of the game, while 'status' tracks its progress.

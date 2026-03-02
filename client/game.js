@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { MenuScene } from "./scenes/MenuScene.js";
+import { StatsScene } from "./scenes/StatsScene.js";
 import { mobileManager } from "./managers/mobile.manager.js";
 
 
@@ -19,7 +20,7 @@ if (mobileManager.isMobile()) {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [MenuScene],
+    scene: [MenuScene, StatsScene],
   };
 
   new Phaser.Game(config);

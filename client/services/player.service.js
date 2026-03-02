@@ -20,4 +20,24 @@ export const playerService = {
   getMe(token) {
     return apiFetch("/players/me", {}, token);
   },
+
+  /**
+   * Update the pseudo of the authenticated player.
+   * @param {string} token
+   * @param {string} pseudo
+   */
+  updateMe(token, pseudo) {
+    return apiFetch("/players/me", {
+      method: "PATCH",
+      body: JSON.stringify({ pseudo }),
+    }, token);
+  },
+
+  /**
+   * Fetch menu stats for the authenticated player.
+   * @param {string} token
+   */
+  getMyStats(token) {
+    return apiFetch("/players/me/stats", {}, token);
+  },
 };

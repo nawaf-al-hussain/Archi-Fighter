@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Archi-Fighter</title>
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="favicon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
 </head>
 <body>
   <!-- Phaser game canvas mounts here -->
@@ -26,18 +26,51 @@
     <!-- Game mode selection (shown once player is identified) -->
     <div id="modal-gamemode" class="modal hidden">
       <div class="modal-box arcade-panel mode-panel">
-        <h1 class="sf-title">
-          <!-- After archi is a Braille Pattern Blank not a whitespace to not cut the latest I  -->
-          <span class="title-top">Archi⠀</span> 
-          <span class="title-bottom">Fighter</span>
-        </h1>
+        <div class="menu-top-actions">
+          <button id="btn-open-settings" class="settings-btn" type="button" aria-label="Open settings">⚙</button>
+          <button id="btn-open-stats" class="settings-btn" type="button" aria-label="Open statistics">📊</button>
+        </div>
+        <img class="logo-archi-fighter" src="./assets/logo_archi_fighter.webp" alt="Archi-Fighter Logo" class="logo">
         <p id="welcome-text" class="retro-subtitle"></p>
         <p class="push-start">Choose Your Fighter Mode</p>
+
+
         <div class="mode-buttons">
           <button id="btn-1v1" class="mode-btn">1 vs 1</button>
           <button id="btn-ai"  class="mode-btn">vs AI</button>
         </div>
         <p class="retro-credit">© Archi-Fighter</p>
+      </div>
+    </div>
+
+    <div id="modal-settings" class="modal hidden">
+      <div class="modal-box arcade-panel settings-panel">
+        <h2 class="retro-prompt">Player Settings</h2>
+        <p class="retro-subtitle">Change your fighter name</p>
+        <input id="input-settings-pseudo" class="retro-input" type="text" placeholder="New name" maxlength="32" autocomplete="off">
+        <div class="settings-actions">
+          <button id="btn-save-settings" class="retro-action" type="button">Save Name</button>
+          <button id="btn-close-settings" class="mode-btn" type="button">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-stats" class="modal hidden">
+      <div class="modal-box arcade-panel stats-panel">
+        <h2 class="retro-prompt">Career Statistics</h2>
+        <p id="stats-player-name" class="retro-subtitle">Fighter: Unknown</p>
+        <section class="stats-board" aria-label="Player statistics">
+          <h3 class="stats-title">Player Stats</h3>
+          <div class="stats-grid">
+            <p>Total Games <span id="stat-total-games">0</span></p>
+            <p>Wins <span id="stat-games-won">0</span></p>
+            <p>Losses <span id="stat-games-lost">0</span></p>
+            <p>Win Rate <span id="stat-win-rate">0%</span></p>
+            <p>Worst Opponent <span id="stat-worst-opponent">N/A</span></p>
+            <p>Lost To Them <span id="stat-worst-opponent-losses">0</span></p>
+          </div>
+        </section>
+        <button id="btn-back-from-stats" class="mode-btn" type="button">Back To Menu</button>
       </div>
     </div>
   </div>

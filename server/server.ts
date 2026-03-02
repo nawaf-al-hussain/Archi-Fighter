@@ -13,7 +13,7 @@ const clientPort = Deno.env.get("CLIENT_PORT") || "8080";
 // CORS middleware
 app.use((ctx, next) => {
   ctx.response.headers.set("Access-Control-Allow-Origin", `http://localhost:${clientPort}`);
-  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   
   // Handle preflight OPTIONS request
