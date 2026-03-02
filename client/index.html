@@ -14,22 +14,28 @@
   <div id="ui-overlay">
     <!-- Name prompt modal (shown when no token) -->
     <div id="modal-name" class="modal hidden">
-      <div class="modal-box">
-        <h2>Enter your pseudo</h2>
-        <input id="input-pseudo" type="text" placeholder="Archi42" maxlength="32" autocomplete="off">
-        <button id="btn-confirm-name">Play</button>
+      <div class="modal-box arcade-panel">
+        <h2 class="retro-prompt">Insert Your Name</h2>
+        <input id="input-pseudo" class="retro-input" type="text" placeholder="Archi42" maxlength="32" autocomplete="off">
+        <button id="btn-confirm-name" class="retro-action">Start Battle</button>
       </div>
     </div>
 
     <!-- Game mode selection (shown once player is identified) -->
     <div id="modal-gamemode" class="modal hidden">
-      <div class="modal-box">
-        <h1>Archi-Fighter</h1>
-        <p id="welcome-text"></p>
+      <div class="modal-box arcade-panel mode-panel">
+        <h1 class="sf-title">
+          <!-- After archi is a Braille Pattern Blank not a whitespace to not cut the latest I  -->
+          <span class="title-top">Archi⠀</span> 
+          <span class="title-bottom">Fighter</span>
+        </h1>
+        <p id="welcome-text" class="retro-subtitle"></p>
+        <p class="push-start">Choose Your Fighter Mode</p>
         <div class="mode-buttons">
           <button id="btn-1v1" class="mode-btn">1 vs 1</button>
           <button id="btn-ai"  class="mode-btn">vs AI</button>
         </div>
+        <p class="retro-credit">© Archi-Fighter</p>
       </div>
     </div>
   </div>

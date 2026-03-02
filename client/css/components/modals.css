@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.55);
   pointer-events: all;
 }
 
@@ -15,33 +15,106 @@
 }
 
 .modal-box {
-  background: #1a1a2e;
-  border: 2px solid #e94560;
-  border-radius: 8px;
-  padding: 2.5rem 3rem;
-  min-width: 340px;
+  background: var(--modal-bg-color);
+  border: 3px solid var(--modal-border-color);
+  border-radius: 10px;
+  padding: 2.25rem 2.5rem;
+  min-width: 360px;
+  width: min(92vw, 1200px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
-  box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
+  gap: 1rem;
+  box-shadow: 0 0 36px var(--modal-shadow-color);
 }
 
-.modal-box h1 {
-  font-size: 2.4rem;
-  letter-spacing: 0.08em;
+.arcade-panel {
+  position: relative;
+  overflow: hidden;
+  width: 50%;
+}
+
+.arcade-panel::before {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  content: "";
+  pointer-events: none;
+}
+
+.mode-panel {
+  gap: 1.2rem;
+}
+
+.sf-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.95;
+  padding: 1.5rem 0rem 1.5rem 0rem;
+}
+
+.sf-title span {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(4rem, 9vw, 6.8rem);
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #e94560;
+  background: linear-gradient(var(--title-gradient-top) 28%, var(--title-gradient-bottom));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 5px 0 #5f0e15);
 }
 
-.modal-box h2 {
-  font-size: 1.4rem;
-  color: #f0f0f0;
+.title-top {
+  transform: skew(-10deg) rotate(-6deg) translateX(2.5rem);
 }
 
-.modal-box p {
-  font-size: 1rem;
-  color: #aaa;
+.title-bottom {
+  transform: skew(-9deg) rotate(-6deg) translateX(0.65rem);
+}
+
+.retro-prompt,
+.retro-subtitle,
+.push-start,
+.retro-credit {
+  font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.retro-prompt {
+  color: rgb(192, 192, 192);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-shadow: 2px 2px 0 rgb(192, 11, 11);
+  margin-bottom: 0.35rem;
+}
+
+.retro-subtitle {
+  color: rgb(147, 154, 255);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  text-shadow: 2px 2px 0 rgb(47, 61, 255);
+}
+
+.push-start {
+  color: rgb(226, 179, 24);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  text-shadow:
+    0 2px 0 rgb(107, 77, 11),
+    2px 0 0 rgb(151, 109, 19),
+    2px 2px 0 rgb(151, 109, 19);
+  animation: blink-prompt 1s steps(1, end) infinite;
+}
+
+.retro-credit {
+  color: #c9ccde;
+  font-size: 0.6rem;
+  text-shadow: 1px 1px 0 #343f78;
 }
 
 
@@ -60,5 +133,11 @@
   font-size: 1.5rem;
   text-align: center;
   padding: 2rem;
+}
+
+@keyframes blink-prompt {
+  50% {
+    opacity: 0.55;
+  }
 }
 
