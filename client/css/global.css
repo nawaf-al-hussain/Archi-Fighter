@@ -1,0 +1,30 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+element {
+  --main-bg-color: #0a0a0a;
+  --main-text-color: #f0f0f0;
+  --accent-color: #e94560;
+  --accent-hover-color: #c73652;
+  --modal-bg-color: #1a1a2e;
+  --modal-border-color: #e94560;
+  --modal-shadow-color: rgba(233, 69, 96, 0.3);
+}
+
+body {
+  background: var(--main-bg-color);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: var(--main-text-color);
+  overflow: hidden;
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+

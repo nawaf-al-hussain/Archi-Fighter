@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { authManager  } from "../managers/auth.manager.js";
 import { playerService } from "../services/player.service.js";
+import { modalManager } from "../managers/modal.manager.js";
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -42,20 +43,16 @@ export class MenuScene extends Phaser.Scene {
         this._showNameModal();
       } else {
         console.error("Server unreachable:", err);
-        // Optimistic: continue with cached player data
-        const cached = authManager.getPlayer();
-        if (cached) this._showGameModeModal(cached);
-        else this._showNameModal();
+        this._showNameModal();
       }
     }
   }
 
   _showNameModal() {
-    const modal  = document.getElementById("modal-name");
     const input  = document.getElementById("input-pseudo");
     const button = document.getElementById("btn-confirm-name");
 
-    modal.classList.remove("hidden");
+    modalManager.showModal("modal-name");
     input.focus();
 
     const confirm = async () => {
@@ -68,7 +65,7 @@ export class MenuScene extends Phaser.Scene {
       try {
         const player = await playerService.create(pseudo);
         authManager.savePlayer(player);
-        modal.classList.add("hidden");
+        modalManager.closeModal("modal-name");
         this._showGameModeModal(player);
       } catch (err) {
         console.error("Failed to create player:", err);
@@ -78,18 +75,19 @@ export class MenuScene extends Phaser.Scene {
 
     button.addEventListener("click", confirm, { once: true });
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") confirm();
-    }, { once: true });
+      if (e.key === "Enter") {
+        confirm();
+      }
+    }, { once: false });
   }
 
-  _showGameModeModal(player) {
-    const modal   = document.getElementById("modal-gamemode");
+  _showGameModeModal(player) {    
     const welcome = document.getElementById("welcome-text");
     const btn1v1  = document.getElementById("btn-1v1");
     const btnAI   = document.getElementById("btn-ai");
 
     welcome.textContent = `Welcome, ${player.pseudo}!`;
-    modal.classList.remove("hidden");
+    modalManager.showModal("modal-gamemode");
 
     btn1v1.addEventListener("click", () => this._selectMode("1VS1"),  { once: true });
     btnAI .addEventListener("click", () => this._selectMode("1VSAI"), { once: true });
@@ -97,7 +95,7 @@ export class MenuScene extends Phaser.Scene {
 
   _selectMode(mode) {
     const modal = document.getElementById("modal-gamemode");
-    modal.classList.add("hidden");
+    modalManager.closeModal("modal-gamemode");
     console.log(`Game mode selected: ${mode}`);
     // TODO: transition to LobbyScene or CharacterSelectScene with { mode }
     // this.scene.start("CharacterSelectScene", { mode });

@@ -1,0 +1,21 @@
+/* Main stylesheet for game canvas. */
+
+/* Phaser canvas container */
+#game-container {
+  position: fixed;
+  inset: 0;
+}
+
+#game-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* UI overlay sits above the canvas */
+#ui-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* passthrough by default */
+  z-index: 10;
+}

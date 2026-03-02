@@ -1,0 +1,64 @@
+/* Modals for game events, such as game over, victory, etc. */
+
+.modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: all;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-box {
+  background: #1a1a2e;
+  border: 2px solid #e94560;
+  border-radius: 8px;
+  padding: 2.5rem 3rem;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
+}
+
+.modal-box h1 {
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e94560;
+}
+
+.modal-box h2 {
+  font-size: 1.4rem;
+  color: #f0f0f0;
+}
+
+.modal-box p {
+  font-size: 1rem;
+  color: #aaa;
+}
+
+
+/* Styles for mobile message when game is not available on mobile devices. */
+
+.mobile-message {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.8);
+  color: #f0f0f0;
+  font-size: 1.5rem;
+  text-align: center;
+  padding: 2rem;
+}
+

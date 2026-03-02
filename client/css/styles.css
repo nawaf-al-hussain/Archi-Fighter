@@ -1,0 +1,7 @@
+@import url('./global.css');
+
+@import url('./components/buttons.css');
+@import url('./components/inputs.css');
+@import url('./components/modals.css');
+@import url('./game/game.css')
+
