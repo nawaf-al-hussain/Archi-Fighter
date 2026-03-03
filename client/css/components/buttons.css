@@ -26,12 +26,21 @@ button:active {
   text-transform: uppercase;
   border: 2px solid #ffffff;
   box-shadow: 0 4px 0 #6b0e18;
+  max-width: 300px;
 }
 
 .retro-action:hover,
 #btn-confirm-name:hover {
   background: var(--accent-hover-color);
   color: #1b1406;
+}
+
+.retro-action:disabled,
+#btn-confirm-name:disabled {
+  background: #555;
+  color: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 

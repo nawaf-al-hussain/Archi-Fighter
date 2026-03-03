@@ -26,6 +26,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   _reset() {
     this._mode            = "1VS1";
+    this._isAiMode        = false;
     this._characters      = [];
     this._maps            = [];
     this._selectedCharId  = null;
@@ -46,18 +47,19 @@ export class CharacterSelectScene extends Phaser.Scene {
   create(data) {
     this._reset();
     this._mode = data?.mode ?? "1VS1";
+    this._isAiMode = this._mode === "1VSAI";
 
     const params   = new URLSearchParams(window.location.search);
     const inviteId = params.get("invite");
-    this._isJoiner = !!inviteId;
-    if (inviteId) this._gameId = Number(inviteId);
+    this._isJoiner = !this._isAiMode && !!inviteId;
+    if (inviteId && !this._isAiMode) this._gameId = Number(inviteId);
 
     this._setupBackground();
     this._buildUi();
     this._fetchData();
 
     // Joiner connects WS as soon as the scene starts
-    if (this._isJoiner && this._gameId) {
+    if (!this._isAiMode && this._isJoiner && this._gameId) {
       this._connectWs();
     }
   }
@@ -77,7 +79,13 @@ export class CharacterSelectScene extends Phaser.Scene {
     modalManager.showModal("modal-char-select");
 
     const title = document.getElementById("char-select-title");
-    if (title) title.textContent = this._isJoiner ? "Join Game" : "Create Game";
+    if (title) {
+      if (this._isAiMode) {
+        title.textContent = "VS AI";
+      } else {
+        title.textContent = this._isJoiner ? "Join Game" : "Create Game";
+      }
+    }
 
     document.getElementById("btn-back-char-select").onclick = () => {
       wsManager.disconnect();
@@ -100,7 +108,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     // Lobby section
     const lobbySection = document.getElementById("char-lobby-section");
     if (lobbySection) {
-      if (this._isJoiner) {
+      if (this._isJoiner || this._isAiMode) {
         lobbySection.style.display = "none";
       } else {
         lobbySection.style.display = "";
@@ -178,6 +186,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this._renderMapRow();
       }
       this._refreshPreviewRow();
+      this._refreshFightBtn();
     } catch (err) {
       console.error("[CharSelect] fetch failed:", err);
     }
@@ -240,6 +249,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     // Broadcast selection as hover too
     if (this._wsConnected) wsManager.sendCharHover(id);
+    this._refreshFightBtn();
   }
 
   _refreshCardStates() {
@@ -289,6 +299,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     });
     const createBtn = document.getElementById("btn-create-lobby");
     if (createBtn) createBtn.disabled = false;
+    this._refreshFightBtn();
   }
 
   // ─── Lobby section ────────────────────────────────────────────────────────
@@ -378,11 +389,18 @@ export class CharacterSelectScene extends Phaser.Scene {
   _refreshFightBtn() {
     const fightBtn = document.getElementById("btn-fight");
     if (!fightBtn) return;
-    const canFight = this._wsConnected && this._selectedCharId !== null && !this._myCharReady;
+    const canFight = this._isAiMode
+      ? this._selectedCharId !== null && this._selectedMapId !== null
+      : this._wsConnected && this._selectedCharId !== null && !this._myCharReady;
     fightBtn.disabled = !canFight;
   }
 
   _onFight() {
+    if (this._isAiMode) {
+      this._startAiGame();
+      return;
+    }
+
     if (!this._selectedCharId || !this._wsConnected || this._myCharReady) return;
     this._myCharReady = true;
 
@@ -393,6 +411,58 @@ export class CharacterSelectScene extends Phaser.Scene {
     fightBtn.textContent = "Waiting…";
 
     this._refreshPreviewRow();
+  }
+
+  async _startAiGame() {
+    if (!this._selectedCharId || !this._selectedMapId) {
+      return;
+    }
+
+    const me = this._characters.find((c) => c.id === this._selectedCharId);
+    if (!me) {
+      return;
+    }
+
+    const candidates = this._characters.filter((c) => c.id !== me.id);
+    const ai = candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : me;
+
+    const mapData = this._maps.find((m) => m.id === this._selectedMapId);
+    let gameId = null;
+
+    try {
+      const created = await gameService.startAiGame(this._selectedMapId, me.id, ai.id);
+      gameId = created?.game_id ?? null;
+    } catch (err) {
+      console.error("[CharSelect] failed to persist AI game:", err);
+    }
+
+    this._cleanup();
+    this.scene.start("FightAiScene", {
+      game_id: gameId,
+      map_key: mapData?.sprite_key ?? "",
+      players: [
+        {
+          team: 1,
+          pseudo: "You",
+          sprite_key: me.sprite_key,
+          health: me.health,
+          speed: me.speed,
+          attack: me.attack,
+          defense: me.defense,
+        },
+        {
+          team: 2,
+          pseudo: "Basic AI",
+          sprite_key: ai.sprite_key,
+          health: ai.health,
+          speed: ai.speed,
+          attack: ai.attack,
+          defense: ai.defense,
+        },
+      ],
+    });
   }
 
   // ─── WS event handlers ────────────────────────────────────────────────────

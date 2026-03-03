@@ -82,7 +82,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["00_IDLE/Corbusier_Idle_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
     },
@@ -144,7 +144,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["09_BLOCK/NIEMEYER_Protect_200.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {
@@ -217,7 +217,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["07_BLOCK/PHIDIAS_Block_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {
@@ -289,7 +289,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["07_BLOCK/PROMOTEUR_BLOCK_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {
@@ -362,7 +362,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["07_BLOCK/KOOLHAAS_Protect_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {
@@ -441,7 +441,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["07_BLOCK/TADAOANDO_Block_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {
@@ -511,7 +511,7 @@ export const CHARACTER_CONFIGS = {
       },
       block: {
         frames: ["10_CROUCH/ZahaHadid_Crouch_200_1.webp"],
-        frameRate: 1,
+        frameRate: 10,
         loop: true,
       },
       special: {

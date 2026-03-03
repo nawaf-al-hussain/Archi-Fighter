@@ -78,9 +78,13 @@
     <div id="modal-char-select" class="modal hidden fullscreen-modal">
       <div class="char-select-panel arcade-panel">
         <div class="char-select-header">
-          <button id="btn-back-char-select" class="mode-btn" type="button">← Back</button>
-          <h2 id="char-select-title" class="retro-prompt">Pick Your Fighter</h2>
-          <button id="btn-fight" class="retro-action" type="button" disabled>Fight! →</button>
+          <div>
+            <button id="btn-back-char-select" class="mode-btn" type="button">← Back</button>
+          </div>
+          <div>
+            <h2 id="char-select-title" class="retro-prompt">Pick Your Fighter</h2>
+          </div>
+          <div></div>
         </div>
 
         <!-- Real-time preview: YOU vs OPPONENT — populated by CharacterSelectScene -->
@@ -99,6 +103,10 @@
         <section id="char-lobby-section" class="char-select-section char-lobby-area">
           <!-- Populated dynamically by CharacterSelectScene -->
         </section>
+        <section id="char-fight-section" class="char-fight-section">
+          <button id="btn-fight" class="retro-action" type="button" disabled>Fight! →</button>
+        </section>
+
       </div>
     </div>
 

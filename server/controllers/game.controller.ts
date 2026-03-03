@@ -32,7 +32,7 @@ export const create = async (ctx: RouterContext<string>) => {
   }
 
   const body    = await ctx.request.body({ type: "json" });
-  const { map_id } = await body.value;
+  const { map_id, type } = await body.value;
 
   if (!map_id) {
     ctx.response.status = 400;
@@ -41,15 +41,124 @@ export const create = async (ctx: RouterContext<string>) => {
   }
 
   try {
-    const game = await gameModel.create(map_id, "1VS1");
+    const gameType = type === "1VSAI" ? "1VSAI" : "1VS1";
+    const game = await gameModel.create(map_id, gameType);
     // Room is created with creator's player id — character is registered at WS connect time
-    gameManager.create(game.id, map_id, player.id);
+    if (gameType === "1VS1") {
+      gameManager.create(game.id, map_id, player.id);
+    }
 
     ctx.response.status = 201;
     ctx.response.body = { game_id: game.id, status: game.status };
   } catch (err) {
     ctx.response.status = 500;
     ctx.response.body = { error: "Failed to create game" };
+    console.error(err);
+  }
+};
+
+/**
+ * POST /api/v1/games/ai/start
+ * Body: { map_id: number, my_character_id: number, ai_character_id: number }
+ */
+export const startAiGame = async (ctx: RouterContext<string>) => {
+  const token = extractBearerToken(ctx.request.headers.get("Authorization"));
+  if (!token) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Missing or invalid Authorization header" };
+    return;
+  }
+
+  const player = await playerModel.getByToken(token);
+  if (!player) {
+    ctx.response.status = 401;
+    ctx.response.body = { error: "Player not found" };
+    return;
+  }
+
+  const body = await ctx.request.body({ type: "json" });
+  const { map_id, my_character_id, ai_character_id } = await body.value;
+
+  if (!map_id || !my_character_id || !ai_character_id) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "map_id, my_character_id and ai_character_id are required" };
+    return;
+  }
+
+  try {
+    const game = await gameModel.create(map_id, "1VSAI");
+    await gameModel.setStatus(game.id, "ongoing");
+    await gameModel.addPlayer(game.id, player.id, my_character_id, 1);
+    await gameModel.addPlayer(game.id, null, ai_character_id, 2);
+
+    ctx.response.status = 201;
+    ctx.response.body = { game_id: game.id, status: "ongoing" };
+  } catch (err) {
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to start AI game" };
+    console.error(err);
+  }
+};
+
+/**
+ * POST /api/v1/games/:id/rounds
+ * Body: { round: number, winner_team: 1 | 2 }
+ */
+export const addRound = async (ctx: RouterContext<string>) => {
+  const gameId = Number(ctx.params.id);
+  if (isNaN(gameId)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid game id" };
+    return;
+  }
+
+  const body = await ctx.request.body({ type: "json" });
+  const { round, winner_team } = await body.value;
+
+  if (!round || ![1, 2].includes(winner_team)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "round and winner_team are required" };
+    return;
+  }
+
+  try {
+    await gameModel.addRound(gameId, Number(round), winner_team);
+    ctx.response.status = 201;
+    ctx.response.body = { ok: true };
+  } catch (err) {
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to save round" };
+    console.error(err);
+  }
+};
+
+/**
+ * PATCH /api/v1/games/:id/finish
+ * Body: { winning_team: 1 | 2 }
+ */
+export const finishGame = async (ctx: RouterContext<string>) => {
+  const gameId = Number(ctx.params.id);
+  if (isNaN(gameId)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid game id" };
+    return;
+  }
+
+  const body = await ctx.request.body({ type: "json" });
+  const { winning_team } = await body.value;
+
+  if (![1, 2].includes(winning_team)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "winning_team must be 1 or 2" };
+    return;
+  }
+
+  try {
+    await gameModel.finish(gameId, winning_team);
+    ctx.response.body = { ok: true };
+  } catch (err) {
+    ctx.response.status = 500;
+    ctx.response.body = { error: "Failed to finish game" };
     console.error(err);
   }
 };

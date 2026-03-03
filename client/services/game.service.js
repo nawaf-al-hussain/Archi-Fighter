@@ -23,4 +23,29 @@ export const gameService = {
       body: JSON.stringify({ map_id: mapId }),
     }, authManager.getToken());
   },
+
+  startAiGame(mapId, myCharacterId, aiCharacterId) {
+    return apiFetch("/games/ai/start", {
+      method: "POST",
+      body: JSON.stringify({
+        map_id: mapId,
+        my_character_id: myCharacterId,
+        ai_character_id: aiCharacterId,
+      }),
+    }, authManager.getToken());
+  },
+
+  saveRound(gameId, round, winnerTeam) {
+    return apiFetch(`/games/${gameId}/rounds`, {
+      method: "POST",
+      body: JSON.stringify({ round, winner_team: winnerTeam }),
+    }, authManager.getToken());
+  },
+
+  finishGame(gameId, winningTeam) {
+    return apiFetch(`/games/${gameId}/finish`, {
+      method: "PATCH",
+      body: JSON.stringify({ winning_team: winningTeam }),
+    }, authManager.getToken());
+  },
 };

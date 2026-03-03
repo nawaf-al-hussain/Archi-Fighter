@@ -2,23 +2,23 @@ import Phaser from "phaser";
 import { CHARACTER_CONFIGS } from "../config/characters.config.js";
 import { MAP_CONFIGS }       from "../config/maps.config.js";
 import { wsManager }         from "../managers/ws.manager.js";
+import {
+  ATTACK_COOLDOWN,
+  BASE_DAMAGE,
+  GROUND_Y,
+  GRAVITY,
+  JUMP_VELOCITY,
+  MOVE_SPEED,
+  createFighterSprite,
+  applyKnockback,
+  encodePath,
+  getBlockDuration,
+  getHitStunDuration,
+  getCharacterAnimDuration,
+  playCharacterAnim,
+  registerCharacterAnimations,
+} from "./fight.shared.js";
 
-/** URL-encode each path segment while keeping "/" separators intact. */
-const ep = (path) => path.split("/").map(encodeURIComponent).join("/");
-
-// ─── Combat constants ────────────────────────────────────────────────────────
-const BASE_DAMAGE = {
-  punch:   8,
-  kick:    12,
-  special: 20,
-  block:   0,
-};
-const MOVE_SPEED      = 220;  // px/s base
-const JUMP_VELOCITY   = -590;
-const GRAVITY         = 1350;
-const GROUND_Y        = 600;  // y of character feet when grounded
-const ATTACK_COOLDOWN = 500;  // ms
-const CHARACTER_SCALE_FACTOR = 0.62;
 const BG_FOLLOW_LERP = 0.12;
 const BG_OPPONENT_VELOCITY_INFLUENCE = 0.08;
 
@@ -82,13 +82,16 @@ export class FightScene extends Phaser.Scene {
     this._blocking    = false;
     this._oppBlocking = false;
     this._lastSentMoveAction = null;
+    this._myStunnedUntil = 0;
+    this._oppStunnedUntil = 0;
   }
 
   preload() {
     // Map background
     const mapCfg = MAP_CONFIGS[this._mapKey];
-    if (mapCfg) {
-      this.load.image("map_bg", ep(mapCfg.path));
+    this._mapTextureKey = this._mapKey ? `map_bg_${this._mapKey}` : "map_bg_default";
+    if (mapCfg && !this.textures.exists(this._mapTextureKey)) {
+      this.load.image(this._mapTextureKey, encodePath(mapCfg.path));
     }
 
     // Character frames for both fighters
@@ -104,7 +107,7 @@ export class FightScene extends Phaser.Scene {
         animCfg.frames.forEach((frame, i) => {
           const textureKey = `${charKey}_${animName}_${i}`;
           if (!this.textures.exists(textureKey)) {
-            this.load.image(textureKey, ep(`${cfg.basePath}/${frame}`));
+            this.load.image(textureKey, encodePath(`${cfg.basePath}/${frame}`));
           }
         });
       }
@@ -115,8 +118,8 @@ export class FightScene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     // ── Background ──
-    if (this.textures.exists("map_bg")) {
-      const bg = this.add.image(0, 0, "map_bg");
+    if (this.textures.exists(this._mapTextureKey)) {
+      const bg = this.add.image(0, 0, this._mapTextureKey);
       bg.setOrigin(0, 0);
       bg.setY(Math.min(0, height - bg.height));
       this._bg = bg;
@@ -192,6 +195,12 @@ export class FightScene extends Phaser.Scene {
        return;
     }
 
+    if (time < this._myStunnedUntil) {
+      this._mySprite.setVelocityX(0);
+      this._sendMoveAction("move_stop");
+      return;
+    }
+
     const { left, right, up, punch, kick, block: blockKey, special } = this._keys;
 
     // ── Block ──
@@ -201,7 +210,8 @@ export class FightScene extends Phaser.Scene {
       this._playAnim(this._mySprite, this._myKey, "block");
       wsManager.sendInput("block");
       this._sendMoveAction("move_stop");
-      this.time.delayedCall(300, () => {
+      const blockDuration = getBlockDuration(this._myStats.speed, this._oppStats.speed);
+      this.time.delayedCall(blockDuration, () => {
         this._blocking = false;
         this._playAnim(this._mySprite, this._myKey, "idle");
       });
@@ -254,80 +264,15 @@ export class FightScene extends Phaser.Scene {
   // ─── Sprite helpers ────────────────────────────────────────────────────────
 
   _createSprite(x, y, charKey, tag) {
-    const cfg = CHARACTER_CONFIGS[charKey];
-
-    // Use the first idle frame as initial texture
-    const initKey = charKey ? `${charKey}_idle_0` : "__DEFAULT";
-    const sprite  = this.physics.add.sprite(x, y, initKey);
-
-    const scl = (cfg?.scale ?? 2) * CHARACTER_SCALE_FACTOR;
-    sprite.setScale(scl);
-    sprite.setCollideWorldBounds(true);
-
-    // push origin to bottom so y matches feet
-    sprite.setOrigin(0.5, 1);
-
-    return sprite;
+    return createFighterSprite(this, x, y, charKey);
   }
 
   _registerAnimations(charKey) {
-    if (!charKey) {
-      return;
-    }
-    const cfg = CHARACTER_CONFIGS[charKey];
-    if (!cfg) {
-      return;
-    }
-
-    for (const [animName, animCfg] of Object.entries(cfg.animations)) {
-      const animKey = `${charKey}_${animName}`;
-      if (this.anims.exists(animKey)) {
-        continue;
-      }
-
-      const frameKeys = animCfg.frames
-        .map((_, i) => ({ key: `${charKey}_${animName}_${i}` }))
-        .filter((frame) => this.textures.exists(frame.key));
-
-      if (frameKeys.length === 0) {
-        continue;
-      }
-
-      this.anims.create({
-        key:        animKey,
-        frames:     frameKeys,
-        frameRate:  animCfg.frameRate,
-        repeat:     animCfg.loop ? -1 : 0,
-      });
-    }
+    registerCharacterAnimations(this, charKey);
   }
 
   _playAnim(sprite, charKey, animName) {
-    const key = `${charKey}_${animName}`;
-
-    const anim = this.anims.get(key);
-    if (!anim || !anim.frames || anim.frames.length === 0) {
-      if (animName !== "idle") {
-        const idleKey = `${charKey}_idle`;
-        const idleAnim = this.anims.get(idleKey);
-        if (idleAnim && idleAnim.frames?.length > 0 && (sprite.anims.currentAnim?.key !== idleKey || !sprite.anims.isPlaying)) {
-          try {
-            sprite.play(idleKey, true);
-          } catch {
-            console.warn(`Failed to play animation ${key}`); 
-          }
-        }
-      }
-      return;
-    }
-
-    if (sprite.anims.currentAnim?.key !== key || !sprite.anims.isPlaying) {
-      try {
-        sprite.play(key, true);
-      } catch {
-        console.warn(`Failed to play animation ${key}`); 
-      }
-    }
+    playCharacterAnim(this, sprite, charKey, animName);
   }
 
   _updateFacing() {
@@ -401,6 +346,17 @@ export class FightScene extends Phaser.Scene {
     const actualDamage = this._oppBlocking ? Math.floor(rawDamage / 2) : rawDamage;
 
     this._oppHp = Math.max(0, this._oppHp - actualDamage);
+    this._oppStunnedUntil = Math.max(
+      this._oppStunnedUntil,
+      this.time.now + getHitStunDuration(action, this._oppBlocking),
+    );
+    applyKnockback({
+      scene: this,
+      attackerSprite: this._mySprite,
+      defenderSprite: this._oppSprite,
+      action,
+      isBlocked: this._oppBlocking,
+    });
 
     if (!this._oppBlocking) {
       this._playAnim(this._oppSprite, this._oppKey, "hit");
@@ -423,23 +379,21 @@ export class FightScene extends Phaser.Scene {
   }
 
   _getAnimDuration(charKey, animName) {
-    const cfg = CHARACTER_CONFIGS[charKey]?.animations?.[animName];
-    if (!cfg) {
-      return 400;
-    }
-    return Math.ceil((cfg.frames.length / cfg.frameRate) * 1000);
+    return getCharacterAnimDuration(charKey, animName);
   }
 
   /** Handle incoming opponent action: apply damage to MY character */
   _onOpponentInput(data) {
     const action = data.action;
+    const now = this.time.now;
 
     // Visual: play opp animation
     if (["punch", "kick", "special", "block", "jump"].includes(action)) {
       this._playAnim(this._oppSprite, this._oppKey, action === "jump" ? "move" : action);
       if (action === "block") {
         this._oppBlocking = true;
-        this.time.delayedCall(300, () => {
+        const blockDuration = getBlockDuration(this._oppStats.speed, this._myStats.speed);
+        this.time.delayedCall(blockDuration, () => {
           this._oppBlocking = false;
           if (!this._roundOver) {
             this._playAnim(this._oppSprite, this._oppKey, "idle");
@@ -457,15 +411,21 @@ export class FightScene extends Phaser.Scene {
     }
 
     if (action === "move_left") {
-      this._oppSprite.setVelocityX(-MOVE_SPEED * this._oppStats.speed);
-      this._playAnim(this._oppSprite, this._oppKey, "move");
+      if (now >= this._oppStunnedUntil) {
+        this._oppSprite.setVelocityX(-MOVE_SPEED * this._oppStats.speed);
+        this._playAnim(this._oppSprite, this._oppKey, "move");
+      }
     } else if (action === "move_right") {
-      this._oppSprite.setVelocityX(MOVE_SPEED * this._oppStats.speed);
-      this._playAnim(this._oppSprite, this._oppKey, "move");
+      if (now >= this._oppStunnedUntil) {
+        this._oppSprite.setVelocityX(MOVE_SPEED * this._oppStats.speed);
+        this._playAnim(this._oppSprite, this._oppKey, "move");
+      }
     } else if (action === "move_stop") {
-      this._oppSprite.setVelocityX(0);
-      if (this._oppSprite.body.blocked.down && !this._roundOver) {
-        this._playAnim(this._oppSprite, this._oppKey, "idle");
+      if (now >= this._oppStunnedUntil) {
+        this._oppSprite.setVelocityX(0);
+        if (this._oppSprite.body.blocked.down && !this._roundOver) {
+          this._playAnim(this._oppSprite, this._oppKey, "idle");
+        }
       }
     } else if (action === "jump") {
       if (this._oppSprite.body.blocked.down) {
@@ -483,8 +443,27 @@ export class FightScene extends Phaser.Scene {
     if (this._blocking) {
       // Blocked — halve damage
       this._myHp = Math.max(0, this._myHp - Math.floor(dmg / 2));
+      this._myStunnedUntil = Math.max(this._myStunnedUntil, now + getHitStunDuration(action, true));
+      applyKnockback({
+        scene: this,
+        attackerSprite: this._oppSprite,
+        defenderSprite: this._mySprite,
+        action,
+        isBlocked: true,
+      });
     } else {
       this._myHp = Math.max(0, this._myHp - dmg);
+      this._blocking = false;
+      this._attacking = false;
+      this._myStunnedUntil = Math.max(this._myStunnedUntil, now + getHitStunDuration(action, false));
+      this._sendMoveAction("move_stop");
+      applyKnockback({
+        scene: this,
+        attackerSprite: this._oppSprite,
+        defenderSprite: this._mySprite,
+        action,
+        isBlocked: false,
+      });
       this._playAnim(this._mySprite, this._myKey, "hit");
       this.time.delayedCall(this._getAnimDuration(this._myKey, "hit"), () => {
         if (!this._roundOver) {
@@ -548,6 +527,8 @@ export class FightScene extends Phaser.Scene {
     this._blocking   = false;
     this._oppBlocking = false;
     this._lastSentMoveAction = null;
+    this._myStunnedUntil = 0;
+    this._oppStunnedUntil = 0;
 
     const { width } = this.scale;
     this._mySprite.setPosition(this._myTeam === 1 ? width * 0.22 : width * 0.78, GROUND_Y);

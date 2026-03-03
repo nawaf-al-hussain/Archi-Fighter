@@ -3,6 +3,7 @@ import { MenuScene }            from "./scenes/MenuScene.js";
 import { StatsScene }           from "./scenes/StatsScene.js";
 import { CharacterSelectScene } from "./scenes/CharacterSelectScene.js";
 import { FightScene }           from "./scenes/FightScene.js";
+import { FightAiScene }         from "./scenes/FightAiScene.js";
 import { mobileManager }        from "./managers/mobile.manager.js";
 
 
@@ -29,7 +30,7 @@ if (mobileManager.isMobile()) {
             gravity: { y: 0 }
         }
     },
-    scene: [MenuScene, StatsScene, CharacterSelectScene, FightScene],
+    scene: [MenuScene, StatsScene, CharacterSelectScene, FightScene, FightAiScene],
   };
 
   new Phaser.Game(config);
