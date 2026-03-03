@@ -104,9 +104,7 @@ export class MenuScene extends Phaser.Scene {
 
   _selectMode(mode) {
     modalManager.closeModal("modal-gamemode");
-    console.log(`Game mode selected: ${mode}`);
-    // TODO: transition to LobbyScene or CharacterSelectScene with { mode }
-    // this.scene.start("CharacterSelectScene", { mode });
+    this.scene.start("CharacterSelectScene", { mode });
   }
 
   _bindMenuUiEvents() {

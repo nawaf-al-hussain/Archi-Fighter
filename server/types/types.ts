@@ -8,6 +8,12 @@ export interface Character {
   sprite_key: string;             // maps to the Phaser sprite asset name
 }
 
+export interface CharacterDbRow extends Omit<Character, "speed" | "attack" | "defense"> {
+  speed: number | string;
+  attack: number | string;
+  defense: number | string;
+}
+
 export interface Map {
   id: number;
   name: string;                   // e.g. "city", "park", etc.

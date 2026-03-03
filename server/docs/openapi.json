@@ -74,6 +74,25 @@
         "properties": {
           "error": { "type": "string", "example": "Character not found" }
         }
+      },
+      "Game": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "integer",                                  "example": 1 },
+          "type":         { "type": "string",                                   "example": "1VS1" },
+          "status":       { "type": "string", "enum": ["pending","ongoing","finished"], "example": "pending" },
+          "map_id":       { "type": "integer",                                  "example": 2 },
+          "winning_team": { "type": "integer", "nullable": true, "enum": [1,2,null], "example": null },
+          "created_at":   { "type": "string",  "format": "date-time" },
+          "updated_at":   { "type": "string",  "format": "date-time" }
+        }
+      },
+      "GameCreated": {
+        "type": "object",
+        "properties": {
+          "game_id": { "type": "integer", "example": 7 },
+          "status":  { "type": "string",  "example": "pending" }
+        }
       }
     },
     "responses": {
@@ -326,12 +345,100 @@
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
+    },
+    "/games": {
+      "post": {
+        "summary": "Create a 1VS1 game",
+        "description": "Creates a new 1VS1 game as player 1 (team 1). Returns a `game_id` to share with the opponent. After creation, both players must connect to `GET /games/{id}/ws` to start the match.",
+        "tags": ["Games"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["character_id", "map_id"],
+                "properties": {
+                  "character_id": { "type": "integer", "example": 1, "description": "Id of the chosen character" },
+                  "map_id":       { "type": "integer", "example": 2, "description": "Id of the chosen map" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Game created — share `game_id` with your opponent",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GameCreated" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/games/{id}/ws": {
+      "get": {
+        "summary": "Connect to a game via WebSocket",
+        "description": "Upgrades the HTTP connection to a **WebSocket**. OpenAPI 3.0 does not have native WebSocket support, so the full message protocol is documented here.\n\n---\n\n## Connection\n\n```\nws://localhost:3000/api/v1/games/{id}/ws?token=<uuid>[&character_id=<int>]\n```\n\n- **Player 1** (creator): provide only `token` — character is already registered from `POST /games`.\n- **Player 2** (joiner): provide both `token` and `character_id`.\n\nThe server sends `waiting` to player 1 while waiting for player 2. Once both are connected, both receive `game_start`.\n\n---\n\n## Client → Server messages\n\n| `type` | `data` | Description |\n|---|---|---|\n| `input` | `{ action: InputAction }` | Send a player action every frame / key event |\n| `round_end` | `{ winner_team: 1 \\| 2 }` | Client reports the round winner (computed locally) |\n| `ping` | — | Keepalive |\n\n**InputAction** values: `move_left` · `move_right` · `jump` · `attack_light` · `attack_heavy` · `block`\n\n---\n\n## Server → Client messages\n\n| `type` | `data` | Description |\n|---|---|---|\n| `waiting` | — | Waiting for opponent to connect |\n| `game_start` | `{ game_id, map_id, your_team, players[] }` | Both players connected — start the match |\n| `opponent_input` | `{ action: InputAction }` | Relay of the opponent's input |\n| `round_result` | `{ round, winner_team }` | A round has ended |\n| `game_over` | `{ winning_team }` | Best-of-3 complete, match over |\n| `opponent_disconnected` | — | Opponent closed the socket |\n| `pong` | — | Response to `ping` |\n| `error` | `{ message }` | Server-side error |\n\n---\n\n## `game_start` payload\n\n```json\n{\n  \"type\": \"game_start\",\n  \"data\": {\n    \"game_id\": 7,\n    \"map_id\": 2,\n    \"your_team\": 1,\n    \"players\": [\n      { \"team\": 1, \"pseudo\": \"Archi42\", \"character_id\": 1 },\n      { \"team\": 2, \"pseudo\": \"BuildBot\", \"character_id\": 3 }\n    ]\n  }\n}\n```",
+        "tags": ["Games"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Game id returned by `POST /games`",
+            "schema": { "type": "integer", "example": 7 }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "Player UUID token (cannot use Authorization header over WebSocket)",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "character_id",
+            "in": "query",
+            "required": false,
+            "description": "Required for player 2 (joiner). Player 1 omits this — character was set in `POST /games`.",
+            "schema": { "type": "integer", "example": 3 }
+          }
+        ],
+        "responses": {
+          "101": { "description": "Switching Protocols — WebSocket connection established" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": {
+            "description": "Game is already full",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "426": {
+            "description": "WebSocket upgrade required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
     { "name": "Health",     "description": "Server health check" },
     { "name": "Characters", "description": "Playable architect characters" },
     { "name": "Maps",       "description": "Battle arena maps" },
-    { "name": "Players",    "description": "Anonymous player management" }
+    { "name": "Players",    "description": "Anonymous player management" },
+    { "name": "Games",      "description": "Game creation and WebSocket match protocol" }
   ]
 }

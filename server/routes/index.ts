@@ -2,6 +2,7 @@ import { Router } from "oak";
 import characterRouter from "./character.routes.ts";
 import mapRouter from "./map.routes.ts";
 import playerRouter from "./player.routes.ts";
+import gameRouter from "./game.routes.ts";
 import docsRouter from "./docs.routes.ts";
 
 const clientPort = Deno.env.get("CLIENT_PORT") || "8080";
@@ -23,6 +24,7 @@ apiRouter.get("/", (ctx) => {
 apiRouter.use(characterRouter.routes(), characterRouter.allowedMethods());
 apiRouter.use(mapRouter.routes(), mapRouter.allowedMethods());
 apiRouter.use(playerRouter.routes(), playerRouter.allowedMethods());
+apiRouter.use(gameRouter.routes(), gameRouter.allowedMethods());
 apiRouter.use(docsRouter.routes(), docsRouter.allowedMethods());
 
 export default apiRouter;

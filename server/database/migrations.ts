@@ -89,6 +89,7 @@ export async function runMigrations() {
 }
 
 // Allows running directly: deno run database/migrations.ts
+// executes: connect → migrate → disconnect and run only if the file is run directly, not imported
 if (import.meta.main) {
   await db.connect();
   await runMigrations();

@@ -73,6 +73,61 @@
         <button id="btn-back-from-stats" class="mode-btn" type="button">Back To Menu</button>
       </div>
     </div>
+
+    <!-- Character + map selection -->
+    <div id="modal-char-select" class="modal hidden fullscreen-modal">
+      <div class="char-select-panel arcade-panel">
+        <div class="char-select-header">
+          <button id="btn-back-char-select" class="mode-btn" type="button">← Back</button>
+          <h2 id="char-select-title" class="retro-prompt">Pick Your Fighter</h2>
+          <button id="btn-fight" class="retro-action" type="button" disabled>Fight! →</button>
+        </div>
+
+        <!-- Real-time preview: YOU vs OPPONENT — populated by CharacterSelectScene -->
+        <div id="cs-preview-row" class="cs-preview-row"></div>
+
+        <section class="char-select-section">
+          <h3 class="retro-subtitle section-label">Choose Your Character</h3>
+          <div id="char-select-grid" class="char-grid"></div>
+        </section>
+
+        <section id="char-map-section" class="char-select-section">
+          <h3 class="retro-subtitle section-label">Choose Your Map</h3>
+          <div id="map-select-row" class="map-row"></div>
+        </section>
+
+        <section id="char-lobby-section" class="char-select-section char-lobby-area">
+          <!-- Populated dynamically by CharacterSelectScene -->
+        </section>
+      </div>
+    </div>
+
+    <!-- Fight HUD (HP bars, round counter) — always in DOM, toggled with .hidden -->
+    <div id="fight-hud" class="hidden">
+      <div class="hud-player hud-p1">
+        <span id="hud-p1-name" class="hud-name">P1</span>
+        <div class="hp-bar-wrap">
+          <div id="hud-p1-hp-fill" class="hp-bar-fill hp-fill-p1"></div>
+        </div>
+        <span id="hud-p1-wins" class="hud-wins"></span>
+      </div>
+
+      <div class="hud-center">
+        <span id="hud-round" class="hud-round">Round 1</span>
+      </div>
+
+      <div class="hud-player hud-p2">
+        <span id="hud-p2-wins" class="hud-wins"></span>
+        <div class="hp-bar-wrap">
+          <div id="hud-p2-hp-fill" class="hp-bar-fill hp-fill-p2"></div>
+        </div>
+        <span id="hud-p2-name" class="hud-name">P2</span>
+      </div>
+    </div>
+
+    <!-- Fight result banners / end-game button -->
+    <div id="fight-banner" class="hidden fight-banner"></div>
+    <button id="btn-fight-back" class="retro-action hidden fight-back-btn" type="button">Back to Menu</button>
   </div>
 
   <script type="module" src="game.js"></script>
