@@ -78,7 +78,7 @@ export class MenuScene extends Phaser.Scene {
 
     button.onclick = confirm;
     input.onkeydown = (e) => {
-      if (e.key === "Enter") {
+       if (e.key === "Enter") {
         confirm();
       }
     };

@@ -27,11 +27,13 @@ export class CharacterSelectScene extends Phaser.Scene {
   _reset() {
     this._mode            = "1VS1";
     this._isAiMode        = false;
+    this._phase           = "character";
     this._characters      = [];
     this._maps            = [];
     this._selectedCharId  = null;
     this._selectedMapId   = null;
     this._gameId          = null;
+    this._inviteUrl       = "";
     this._isJoiner        = false;
     this._lobbyCreated    = false;
     this._wsConnected     = false;
@@ -95,26 +97,12 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     const fightBtn       = document.getElementById("btn-fight");
     fightBtn.disabled    = true;
-    fightBtn.textContent = "Fight! →";
+    fightBtn.textContent = "Lock Map →";
     fightBtn.onclick     = () => this._onFight();
 
-    // Preview row — always visible
+    this._phase = this._isJoiner ? "character" : "map";
     this._refreshPreviewRow();
-
-    // Map section (creator only)
-    const mapSection = document.getElementById("char-map-section");
-    if (mapSection) mapSection.style.display = this._isJoiner ? "none" : "";
-
-    // Lobby section
-    const lobbySection = document.getElementById("char-lobby-section");
-    if (lobbySection) {
-      if (this._isJoiner || this._isAiMode) {
-        lobbySection.style.display = "none";
-      } else {
-        lobbySection.style.display = "";
-        this._renderLobbyCreate();
-      }
-    }
+    this._refreshStepUi();
   }
 
   // ─── Preview row ──────────────────────────────────────────────────────────
@@ -185,6 +173,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       if (!this._isJoiner) {
         this._renderMapRow();
       }
+      this._refreshStepUi();
       this._refreshPreviewRow();
       this._refreshFightBtn();
     } catch (err) {
@@ -272,7 +261,9 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   _renderMapRow() {
     const row = document.getElementById("map-select-row");
-    if (!row) return;
+
+    if (!row) 
+      return;
     row.innerHTML = "";
 
     for (const map of this._maps) {
@@ -292,81 +283,129 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   _selectMap(id) {
-    if (this._lobbyCreated) return; // already committed
+    const mapPreview = document.getElementById("map-select-preview");
+
+    if (this._phase !== "map")
+      return;
     this._selectedMapId = id;
+
     document.querySelectorAll("#map-select-row .map-tile").forEach((el) => {
       el.classList.toggle("selected", Number(el.dataset.id) === id);
     });
-    const createBtn = document.getElementById("btn-create-lobby");
-    if (createBtn) createBtn.disabled = false;
+
+    if (mapPreview) {
+      const cfg = MAP_CONFIGS[this._maps.find(m => m.id === id)?.sprite_key ?? ""];
+      mapPreview.style.backgroundImage = cfg ? `url(${cfg.path})` : "none";
+    }
     this._refreshFightBtn();
   }
 
-  // ─── Lobby section ────────────────────────────────────────────────────────
+  // ─── Step flow ────────────────────────────────────────────────────────────
 
-  _renderLobbyCreate() {
+  _refreshStepUi() {
+    const mapSection  = document.getElementById("char-map-section");
+    const charSection = document.getElementById("char-character-section");
+    const previewRow  = document.getElementById("cs-preview-row");
+    const fightSection = document.getElementById("char-fight-section");
     const lobbySection = document.getElementById("char-lobby-section");
-    if (!lobbySection) return;
-    lobbySection.innerHTML = `
-      <button id="btn-create-lobby" class="retro-action cs-lobby-btn" type="button" disabled>
-        Create Lobby
-      </button>
-      <p id="lobby-hint" class="push-start cs-lobby-hint">← Select a map first</p>
-    `;
-    document.getElementById("btn-create-lobby").onclick = () => this._onCreateLobby();
+    const fightBtn = document.getElementById("btn-fight");
+
+    if (!mapSection || !charSection || !previewRow || !fightSection || !fightBtn || !lobbySection) return;
+
+    if (this._phase === "map") {
+      mapSection.style.display = this._isJoiner ? "none" : "";
+      charSection.style.display = "none";
+      previewRow.style.display = "none";
+      fightSection.style.display = this._isJoiner ? "none" : "";
+      lobbySection.style.display = "none";
+      fightBtn.textContent = "Lock Map →";
+      return;
+    }
+
+    mapSection.style.display = "none";
+    charSection.style.display = "";
+    previewRow.style.display = "";
+    fightSection.style.display = "";
+    fightBtn.textContent = this._myCharReady ? "Waiting…" : "Fight! →";
+
+    if (this._isAiMode) {
+      lobbySection.style.display = "none";
+      return;
+    }
+
+    lobbySection.style.display = "";
+    lobbySection.innerHTML = `<p id="lobby-status" class="push-start cs-lobby-hint">Waiting for opponent to join…</p>`;
   }
 
-  async _onCreateLobby() {
-    if (!this._selectedMapId) return;
-    const createBtn       = document.getElementById("btn-create-lobby");
-    createBtn.disabled    = true;
-    createBtn.textContent = "Creating…";
+  async _onMapLock() {
+    if (!this._selectedMapId)
+      return;
+
+    if (this._isAiMode) {
+      this._phase = "character";
+      this._refreshStepUi();
+      this._refreshFightBtn();
+      return;
+    }
+
+    if (this._isJoiner) return;
+
+    const fightBtn = document.getElementById("btn-fight");
+    if (fightBtn) {
+      fightBtn.disabled = true;
+      fightBtn.textContent = "Creating…";
+    }
 
     try {
-      const game         = await gameService.createGame(this._selectedMapId);
-      this._gameId       = game.game_id;
+      const game = await gameService.createGame(this._selectedMapId);
+      this._gameId = game.game_id;
       this._lobbyCreated = true;
+      this._inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${this._gameId}`;
 
-      // Lock map tiles
-      document.querySelectorAll("#map-select-row .map-tile").forEach((el) => {
-        el.style.pointerEvents = "none";
-        el.style.opacity       = "0.5";
-      });
-
-      // Connect WS now (creator)
       this._connectWs();
+      this._showInviteShareModal();
 
-      // Show invite in lobby section
-      this._renderInviteLink();
+      this._phase = "character";
+      this._refreshStepUi();
+      this._refreshPreviewRow();
+      this._refreshFightBtn();
     } catch (err) {
       console.error("[CharSelect] create lobby failed:", err);
-      createBtn.disabled    = false;
-      createBtn.textContent = "Create Lobby";
+      if (fightBtn) {
+        fightBtn.disabled = false;
+        fightBtn.textContent = "Lock Map →";
+      }
     }
   }
 
-  _renderInviteLink() {
-    const inviteUrl    = `${window.location.origin}${window.location.pathname}?invite=${this._gameId}`;
-    const lobbySection = document.getElementById("char-lobby-section");
-    if (!lobbySection) return;
+  _showInviteShareModal() {
+    const inviteLink = document.getElementById("invite-share-link");
+    const copyBtn = document.getElementById("btn-copy-share-invite");
+    const continueBtn = document.getElementById("btn-continue-after-share");
+    if (!inviteLink || !copyBtn || !continueBtn) return;
 
-    lobbySection.innerHTML = `
-      <div class="invite-block">
-        <p class="invite-block-label">Share with your opponent:</p>
-        <div class="invite-block-row">
-          <span class="invite-link">${inviteUrl}</span>
-          <button id="btn-copy-invite" class="retro-action" type="button">Copy</button>
-        </div>
-        <p id="lobby-status" class="push-start cs-lobby-hint">Waiting for opponent to join…</p>
-      </div>
-    `;
+    inviteLink.textContent = this._inviteUrl;
 
-    document.getElementById("btn-copy-invite").onclick = async () => {
-      await navigator.clipboard.writeText(inviteUrl);
-      const btn = document.getElementById("btn-copy-invite");
-      btn.textContent = "Copied!";
-      setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+    copyBtn.onclick = async () => {
+      await navigator.clipboard.writeText(this._inviteUrl);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => { 
+        modalManager.closeModal("modal-invite-share");
+      }, 2000);
     };
+
+    continueBtn.onclick = () => {
+      modalManager.closeModal("modal-invite-share");
+    };
+
+    modalManager.showModal("modal-invite-share");
+  }
+
+  _setLobbyStatus(text, pulse = false) {
+    const statusEl = document.getElementById("lobby-status");
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.classList.toggle("cs-waiting-pulse", pulse);
   }
 
   // ─── WebSocket connection ──────────────────────────────────────────────────
@@ -389,6 +428,12 @@ export class CharacterSelectScene extends Phaser.Scene {
   _refreshFightBtn() {
     const fightBtn = document.getElementById("btn-fight");
     if (!fightBtn) return;
+
+    if (this._phase === "map") {
+      fightBtn.disabled = this._selectedMapId === null;
+      return;
+    }
+
     const canFight = this._isAiMode
       ? this._selectedCharId !== null && this._selectedMapId !== null
       : this._wsConnected && this._selectedCharId !== null && !this._myCharReady;
@@ -396,6 +441,11 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   _onFight() {
+    if (this._phase === "map") {
+      this._onMapLock();
+      return;
+    }
+
     if (this._isAiMode) {
       this._startAiGame();
       return;
@@ -468,39 +518,12 @@ export class CharacterSelectScene extends Phaser.Scene {
   // ─── WS event handlers ────────────────────────────────────────────────────
 
   _onWsWaiting() {
-    // 1st player connected — show waiting state
-    const statusEl = document.getElementById("lobby-status");
-    if (statusEl) statusEl.textContent = "Waiting for opponent to join…";
-
-    // For joiner showing first (edge case): update lobby section
-    if (this._isJoiner) {
-      const lobbySection = document.getElementById("char-lobby-section");
-      if (lobbySection) {
-        lobbySection.style.display = "";
-        lobbySection.innerHTML = `
-          <p class="push-start cs-lobby-hint cs-waiting-pulse">Waiting for the host to connect…</p>
-        `;
-      }
-    }
-
+    this._setLobbyStatus("Waiting for opponent to join…", true);
     this._refreshPreviewRow();
   }
 
   _onLobbyJoined() {
-    // Both players are now in the lobby
-    const statusEl = document.getElementById("lobby-status");
-    if (statusEl) statusEl.textContent = "Opponent joined! Select your character.";
-
-    if (this._isJoiner) {
-      const lobbySection = document.getElementById("char-lobby-section");
-      if (lobbySection) {
-        lobbySection.style.display = "";
-        lobbySection.innerHTML = `
-          <p class="push-start cs-lobby-hint">Host is connected. Pick your fighter!</p>
-        `;
-      }
-    }
-
+    this._setLobbyStatus("Opponent joined! Select your character.", false);
     this._refreshPreviewRow();
     this._refreshFightBtn();
   }
@@ -552,6 +575,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   _cleanup() {
     modalManager.closeModal("modal-char-select");
+    modalManager.closeModal("modal-invite-share");
     const fightBtn = document.getElementById("btn-fight");
     if (fightBtn) {
       fightBtn.textContent = "Fight! →";

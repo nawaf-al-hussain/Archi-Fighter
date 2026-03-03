@@ -90,12 +90,16 @@
         <!-- Real-time preview: YOU vs OPPONENT — populated by CharacterSelectScene -->
         <div id="cs-preview-row" class="cs-preview-row"></div>
 
-        <section class="char-select-section">
+        <section id="char-character-section" class="char-select-section">
           <h3 class="retro-subtitle section-label">Choose Your Character</h3>
           <div id="char-select-grid" class="char-grid"></div>
         </section>
 
         <section id="char-map-section" class="char-select-section">
+          <div class="map-preview-container">
+            <div id="map-select-preview" class="map-preview" style="background-image: url('./assets/images/maps/world_map.webp');"></div>
+            <p id="selected-map-name"></p>
+          </div>
           <h3 class="retro-subtitle section-label">Choose Your Map</h3>
           <div id="map-select-row" class="map-row"></div>
         </section>
@@ -107,6 +111,20 @@
           <button id="btn-fight" class="retro-action" type="button" disabled>Fight! →</button>
         </section>
 
+      </div>
+    </div>
+
+    <div id="modal-invite-share" class="modal hidden">
+      <div class="modal-box arcade-panel invite-share-panel">
+        <h2 class="retro-prompt">Share Match Link</h2>
+        <p class="retro-subtitle">Send this invite before choosing fighters</p>
+        <div class="invite-block">
+          <div class="invite-block-row">
+            <span id="invite-share-link" class="invite-link"></span>
+            <button id="btn-copy-share-invite" class="retro-action" type="button">Copy</button>
+          </div>
+        </div>
+        <button id="btn-continue-after-share" class="mode-btn" type="button">Continue to Character Select</button>
       </div>
     </div>
 
