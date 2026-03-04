@@ -16,7 +16,7 @@ if (mobileManager.isMobile()) {
   const config = {
     type: Phaser.AUTO,
     parent: "game-container",
-    width: 1280,
+    width: 1280, // Overrided by CSS in global.css
     height: 720,
     backgroundColor: "#0a0a0a",
     scale: {

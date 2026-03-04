@@ -1,19 +1,13 @@
 /* Main stylesheet for game canvas. */
 
 /* Phaser canvas container */
-#game-container {
+.game-container {
   position: fixed;
   inset: 0;
 }
 
-#game-container canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-}
-
 /* UI overlay sits above the canvas */
-#ui-overlay {
+.ui-overlay-class {
   position: fixed;
   inset: 0;
   pointer-events: none; /* passthrough by default */
@@ -105,7 +99,7 @@
 }
 
 .char-card.selected {
-  border-color: #e2b318;
+  border-color: var(--cs-select-color);
   background: rgba(40, 30, 5, 0.85);
   box-shadow: 0 0 12px rgba(226, 179, 24, 0.4);
 }
@@ -225,7 +219,7 @@
 }
 
 .cs-preview-you .cs-preview-badge {
-  color: #e2b318;
+  color: var(--cs-select-color);
 }
 
 .cs-preview-portrait {
@@ -300,7 +294,7 @@
 }
 
 .cs-preview-you .cs-preview-status {
-  color: #e2b318;
+  color: var(--cs-select-color);
 }
 
 /* Map selection row */
@@ -346,7 +340,7 @@
 }
 
 .map-tile.selected {
-  border-color: #e2b318;
+  border-color: var(--cs-select-color);
   box-shadow: 0 0 10px rgba(226, 179, 24, 0.35);
 }
 
@@ -451,7 +445,7 @@
 
 /* ── Fight HUD ──────────────────────────────────────────────────────────────── */
 
-#fight-hud {
+.fight-hud-top {
   position: fixed;
   top: 0;
   left: 0;
@@ -465,7 +459,7 @@
   pointer-events: none;
 }
 
-#fight-hud.hidden {
+.fight-hud-top.hidden {
   display: none;
 }
 
@@ -516,7 +510,7 @@
 .hud-wins {
   font-family: 'Press Start 2P', cursive;
   font-size: 0.65rem;
-  color: #e2b318;
+  color: var(--cs-select-color);
   min-width: 1.5rem;
   letter-spacing: 0.1em;
 }
@@ -532,7 +526,7 @@
 .hud-round {
   font-family: 'Press Start 2P', cursive;
   font-size: 0.55rem;
-  color: #e2b318;
+  color: var(--cs-select-color);
   text-shadow: 1px 1px 0 #6a4d12;
   white-space: nowrap;
 }
@@ -547,7 +541,7 @@
   z-index: 25;
   font-family: 'Press Start 2P', cursive;
   font-size: clamp(1.2rem, 4vw, 2.4rem);
-  color: #e2b318;
+  color: var(--cs-select-color);
   text-shadow:
     3px 3px 0 #6a4d12,
     0 0 30px rgba(226, 179, 24, 0.7);

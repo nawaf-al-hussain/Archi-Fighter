@@ -9,10 +9,10 @@
 </head>
 <body>
   <!-- Phaser game canvas mounts here -->
-  <div id="game-container"></div>
+  <div id="game-container" class="phaser-game-container"></div>
 
   <!-- UI overlay (modals rendered outside Phaser) -->
-  <div id="ui-overlay">
+  <div id="ui-overlay" class="ui-overlay-class">
     <!-- Name prompt modal (shown when no token) -->
     <div id="modal-name" class="modal hidden">
       <div class="modal-box arcade-panel">
@@ -129,7 +129,7 @@
     </div>
 
     <!-- Fight HUD (HP bars, round counter) — always in DOM, toggled with .hidden -->
-    <div id="fight-hud" class="hidden">
+    <div id="fight-hud" class="fight-hud-top hidden">
       <div class="hud-player hud-p1">
         <span id="hud-p1-name" class="hud-name">P1</span>
         <div class="hp-bar-wrap">
