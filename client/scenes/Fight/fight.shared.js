@@ -1,4 +1,4 @@
-import { CHARACTER_CONFIGS } from "../config/characters.config.js";
+import { CHARACTER_CONFIGS } from "../../config/characters.config.js";
 
 export const BASE_DAMAGE = {
   punch: 8,

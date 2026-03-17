@@ -2,8 +2,8 @@ import Phaser from "phaser";
 import { MenuScene }            from "./scenes/MenuScene.js";
 import { StatsScene }           from "./scenes/StatsScene.js";
 import { CharacterSelectScene } from "./scenes/CharacterSelectScene.js";
-import { FightScene }           from "./scenes/FightScene.js";
-import { FightAiScene }         from "./scenes/FightAiScene.js";
+import { FightScene }           from "./scenes/Fight/FightScene.js";
+import { FightAiScene }         from "./scenes/Fight/FightAiScene.js";
 import { mobileManager }        from "./managers/mobile.manager.js";
 
 

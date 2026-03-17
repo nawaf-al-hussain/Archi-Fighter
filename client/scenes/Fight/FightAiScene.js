@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { CHARACTER_CONFIGS } from "../config/characters.config.js";
-import { MAP_CONFIGS } from "../config/maps.config.js";
-import { gameService } from "../services/game.service.js";
+import { CHARACTER_CONFIGS } from "../../config/characters.config.js";
+import { MAP_CONFIGS } from "../../config/maps.config.js";
+import { gameService } from "../../services/game.service.js";
 import {
   ATTACK_COOLDOWN,
   BASE_DAMAGE,
