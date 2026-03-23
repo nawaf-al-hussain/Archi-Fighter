@@ -63,22 +63,6 @@ export async function runMigrations() {
     )
   `);
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS images (
-      id         SERIAL PRIMARY KEY,
-      file_name  TEXT NOT NULL,
-      file_path  TEXT NOT NULL,
-      model_type TEXT NOT NULL,
-      model_id   INT  NOT NULL
-    )
-  `);
-
-  // Alter table image to add type column for categorization
-  await db.query(`
-    ALTER TABLE images
-    ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'general'
-  `);
-
   // Allow duplicate pseudos — pseudo is a display name, not a unique identifier
   await db.query(`
     ALTER TABLE players
