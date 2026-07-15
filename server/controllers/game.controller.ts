@@ -1,7 +1,7 @@
 import type { RouterContext } from "oak";
 import { gameModel } from "../models/game.model.ts";
 import { playerModel } from "../models/player.model.ts";
-import { gameManager } from "../websocket/game.manager.ts";
+import { postOffer as relayOffer, postAnswer as relayAnswer, postIce as relayIce, poll as relayPoll } from "../signaling/relay.ts";
 
 const extractBearerToken = (authHeader: string | null): string | null => {
   if (!authHeader?.startsWith("Bearer ")) return null;
@@ -43,10 +43,6 @@ export const create = async (ctx: RouterContext<string>) => {
   try {
     const gameType = type === "1VSAI" ? "1VSAI" : "1VS1";
     const game = await gameModel.create(map_id, gameType);
-    // Room is created with creator's player id — character is registered at WS connect time
-    if (gameType === "1VS1") {
-      gameManager.create(game.id, map_id, player.id);
-    }
 
     ctx.response.status = 201;
     ctx.response.body = { game_id: game.id, status: game.status };
@@ -164,58 +160,84 @@ export const finishGame = async (ctx: RouterContext<string>) => {
 };
 
 /**
- * GET /api/v1/games/:id/ws
- * Upgrade to WebSocket. Character selection happens inside the room via
- * char_ready messages — no character_id needed at connect time.
- *
- * Query: ?token=<token>
+ * POST /api/v1/games/:id/signal/offer
+ * Body: { from: "p1"|"p2", sdp: RTCSessionDescriptionInit }
  */
-export const connect = async (ctx: RouterContext<string>) => {
-  if (!ctx.isUpgradable) {
-    ctx.response.status = 426;
-    ctx.response.body = { error: "WebSocket upgrade required" };
-    return;
-  }
-
+export const postOffer = async (ctx: RouterContext<string>) => {
   const gameId = Number(ctx.params.id);
   if (isNaN(gameId)) {
     ctx.response.status = 400;
     ctx.response.body = { error: "Invalid game id" };
     return;
   }
-
-  const params = ctx.request.url.searchParams;
-  const token  = params.get("token");
-
-  if (!token) {
+  const body = await ctx.request.body({ type: "json" });
+  const { from, sdp } = await body.value;
+  if (!from || !sdp) {
     ctx.response.status = 400;
-    ctx.response.body = { error: "token query param is required" };
+    ctx.response.body = { error: "from and sdp are required" };
     return;
   }
+  await relayOffer(gameId, from, sdp);
+  ctx.response.body = { ok: true };
+};
 
-  const player = await playerModel.getByToken(token);
-  if (!player) {
-    ctx.response.status = 401;
-    ctx.response.body = { error: "Invalid token" };
+/**
+ * POST /api/v1/games/:id/signal/answer
+ * Body: { from: "p1"|"p2", sdp: RTCSessionDescriptionInit }
+ */
+export const postAnswer = async (ctx: RouterContext<string>) => {
+  const gameId = Number(ctx.params.id);
+  if (isNaN(gameId)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid game id" };
     return;
   }
-
-  const room = gameManager.get(gameId);
-  if (!room) {
-    ctx.response.status = 404;
-    ctx.response.body = { error: "Game not found or already finished" };
+  const body = await ctx.request.body({ type: "json" });
+  const { from, sdp } = await body.value;
+  if (!from || !sdp) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "from and sdp are required" };
     return;
   }
+  await relayAnswer(gameId, from, sdp);
+  ctx.response.body = { ok: true };
+};
 
-  // Creator is always team 1; any other authenticated player is team 2
-  const team: 1 | 2 = player.id === room.creatorId ? 1 : 2;
-
-  if (team === 2 && room.isFull) {
-    ctx.response.status = 409;
-    ctx.response.body = { error: "Game is already full" };
+/**
+ * POST /api/v1/games/:id/signal/ice
+ * Body: { from: "p1"|"p2", candidate: RTCIceCandidateInit }
+ */
+export const postIce = async (ctx: RouterContext<string>) => {
+  const gameId = Number(ctx.params.id);
+  if (isNaN(gameId)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid game id" };
     return;
   }
+  const body = await ctx.request.body({ type: "json" });
+  const { from, candidate } = await body.value;
+  if (!from || !candidate) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "from and candidate are required" };
+    return;
+  }
+  await relayIce(gameId, from, candidate);
+  ctx.response.body = { ok: true };
+};
 
-  const ws = ctx.upgrade();
-  room.addPlayer(team, ws, player);
+/**
+ * GET /api/v1/games/:id/signal/poll?peer=p1&since=0
+ * Returns: { messages: SignalMessage[] }
+ */
+export const pollSignal = async (ctx: RouterContext<string>) => {
+  const gameId = Number(ctx.params.id);
+  if (isNaN(gameId)) {
+    ctx.response.status = 400;
+    ctx.response.body = { error: "Invalid game id" };
+    return;
+  }
+  const peer = ctx.request.url.searchParams.get("peer") ?? "p1";
+  const since = Number(ctx.request.url.searchParams.get("since") ?? "0");
+  const msgs = await relayPoll(gameId, peer, since);
+  ctx.response.body = { messages: msgs };
 };
