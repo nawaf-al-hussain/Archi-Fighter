@@ -4,6 +4,7 @@ import mapRouter from "./map.routes.ts";
 import playerRouter from "./player.routes.ts";
 import gameRouter from "./game.routes.ts";
 import docsRouter from "./docs.routes.ts";
+import matchmakingRouter from "./matchmaking.routes.ts";
 
 const clientPort = Deno.env.get("CLIENT_PORT") || "8080";
 const serverPort = Deno.env.get("SERVER_PORT") || "3000";
@@ -16,7 +17,7 @@ apiRouter.get("/", (ctx) => {
     message: "Archi-Fighter API is running!",
     status: "running",
     client: `http://localhost:${clientPort}`,
-	docs: `http://localhost:${serverPort}/api/v1/docs`
+        docs: `http://localhost:${serverPort}/api/v1/docs`
 
   };
 });
@@ -26,5 +27,6 @@ apiRouter.use(mapRouter.routes(), mapRouter.allowedMethods());
 apiRouter.use(playerRouter.routes(), playerRouter.allowedMethods());
 apiRouter.use(gameRouter.routes(), gameRouter.allowedMethods());
 apiRouter.use(docsRouter.routes(), docsRouter.allowedMethods());
+apiRouter.use(matchmakingRouter.routes(), matchmakingRouter.allowedMethods());
 
 export default apiRouter;
