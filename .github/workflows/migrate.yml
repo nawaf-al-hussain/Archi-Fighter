@@ -1,0 +1,35 @@
+name: Run DB Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/database/migrations.ts'
+      - 'server/database/seeder.ts'
+      - '.github/workflows/migrate.yml'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ALLOWED_ORIGINS: "https://archi-fighter.vercel.app"
+        run: |
+          cd server
+          deno run --allow-net --allow-read --allow-env database/migrations.ts
+
+      - name: Run seeders (idempotent)
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ALLOWED_ORIGINS: "https://archi-fighter.vercel.app"
+        run: |
+          cd server
+          deno run --allow-net --allow-read --allow-env database/seeder.ts
