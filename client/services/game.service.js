@@ -48,4 +48,27 @@ export const gameService = {
       body: JSON.stringify({ winning_team: winningTeam }),
     }, authManager.getToken());
   },
+
+  // ─── WebRTC signaling (replaces old WS connect) ────────────────────
+
+  postOffer: (gameId, from, sdp) =>
+    apiFetch(`/games/${gameId}/signal/offer`, {
+      method: "POST",
+      body: JSON.stringify({ from, sdp }),
+    }),
+
+  postAnswer: (gameId, from, sdp) =>
+    apiFetch(`/games/${gameId}/signal/answer`, {
+      method: "POST",
+      body: JSON.stringify({ from, sdp }),
+    }),
+
+  postIce: (gameId, from, candidate) =>
+    apiFetch(`/games/${gameId}/signal/ice`, {
+      method: "POST",
+      body: JSON.stringify({ from, candidate }),
+    }),
+
+  pollSignal: (gameId, peer, since) =>
+    apiFetch(`/games/${gameId}/signal/poll?peer=${peer}&since=${since}`),
 };
