@@ -1,27 +1,48 @@
-import { Client } from "@db/postgres";
-import "@std/dotenv/load";
+import { Pool } from "@db/postgres";
 
-export class DatabaseHandler {
-	private client: Client;
+class Database {
+  private pool: Pool | null = null;
 
-	constructor() {
-		this.client = new Client({
-			hostname: Deno.env.get("DB_HOST") ?? "localhost",
-			port:     parseInt(Deno.env.get("DB_PORT") ?? "5432"),
-			user:     Deno.env.get("DB_USER"),
-			password: Deno.env.get("DB_PASSWORD"),
-			database: Deno.env.get("DB_NAME"),
-		});
-	}
+  async connect(): Promise<void> {
+    const url = Deno.env.get("DATABASE_URL");
+    if (!url) throw new Error("DATABASE_URL not set");
 
-	async connect() { await this.client.connect(); }
-	async disconnect() { await this.client.end(); }
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch {
+      throw new Error(`DATABASE_URL is not a valid URL: ${url}`);
+    }
 
-	async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
-		const result = await this.client.queryObject<T>(sql, params);
-		return result.rows;
-	}
+    // Small pool per isolate (Neon pooler handles server-side multiplexing)
+    this.pool = new Pool(url, 3, true); // 3 connections, lazy
+    console.log("[db] Pool created");
+  }
 
+  // Generic with `unknown` default so the brief's contract
+  // (`db.query(sql) -> Promise<unknown[]>`) holds AND existing model call sites
+  // (`db.query<Player>(...)`) keep type-checking. Deviation from the brief's
+  // verbatim non-generic signature, documented for the same reason Task 2
+  // widened oak's `Next` type: the alternative is editing every model file,
+  // which is explicitly out of scope.
+  async query<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
+    if (!this.pool) throw new Error("db.connect() not called");
+    const client = await this.pool.connect();
+    try {
+      const result = await client.queryObject<T>(sql, params);
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  async end(): Promise<void> {
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+      console.log("[db] Pool closed");
+    }
+  }
 }
 
-export const db = new DatabaseHandler();
+export const db = new Database();
