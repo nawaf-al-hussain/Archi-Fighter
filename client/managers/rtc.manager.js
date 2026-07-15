@@ -101,6 +101,15 @@ class RtcManager {
     }, ICE_TIMEOUT_MS);
   }
 
+  /**
+   * Replace the message handler without re-initializing the connection.
+   * Used when transitioning from CharacterSelectScene to FightScene.
+   * @param {(msg: any) => void} onMessage
+   */
+  setMessageHandler(onMessage) {
+    this._onMessage = onMessage;
+  }
+
   _setupDataChannel() {
     this._dc.onmessage = (e) => {
       try {

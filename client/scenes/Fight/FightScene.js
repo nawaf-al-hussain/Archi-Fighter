@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { CHARACTER_CONFIGS } from "../../config/characters.config.js";
 import { MAP_CONFIGS }       from "../../config/maps.config.js";
-import { wsManager }         from "../../managers/ws.manager.js";
+import { rtcManager }      from "../../managers/rtc.manager.js";
+import { netcodeManager }  from "../../managers/netcode.manager.js";
 import {
   ATTACK_COOLDOWN,
   BASE_DAMAGE,
@@ -179,15 +180,38 @@ export class FightScene extends Phaser.Scene {
     this._buildHud();
     this._updateHud();
 
-    // ── WS handlers ──
-    wsManager
-      .on("opponent_input",    (d) => this._onOpponentInput(d))
-      .on("round_result",      (d) => this._onRoundResult(d))
-      .on("game_over",         (d) => this._onGameOver(d))
-      .on("opponent_disconnected", () => this._onOpponentDisconnected());
+    // ── RTC message routing + netcode ──
+    // rtcManager was initialized in CharacterSelectScene. Here we swap the
+    // message handler to route fight-specific messages, and wire up
+    // netcodeManager to apply inputs through the delay buffer.
+    if (rtcManager.state === "connected" || rtcManager.state === "connecting") {
+      rtcManager.setMessageHandler((msg) => {
+        if (msg.type === "opponent_input" || msg.type === "input") {
+          // Netcode-routed opponent input
+          netcodeManager._handleRemote({
+            type: "input",
+            data: { action: msg.data.action, frame: msg.data.frame ?? 0 },
+          });
+        } else if (msg.type === "round_result") {
+          this._onRoundResult(msg.data);
+        } else if (msg.type === "game_over") {
+          this._onGameOver(msg.data);
+        } else if (msg.type === "opponent_disconnected" || msg.type === "disconnect") {
+          this._onOpponentDisconnected();
+        }
+      });
+
+      netcodeManager.init(rtcManager, (input) => {
+        if (input.source === "remote") {
+          this._onOpponentInput({ action: input.action });
+        }
+        // Local inputs are applied by the scene's own input handlers
+      });
+    }
   }
 
   update(time) {
+    netcodeManager.tick();
     this._updateFacing();
     this._updateBackgroundPan();
 
@@ -208,7 +232,7 @@ export class FightScene extends Phaser.Scene {
     if (isBlocking && !this._attacking) {
       this._blocking = true;
       this._playAnim(this._mySprite, this._myKey, "block");
-      wsManager.sendInput("block");
+      netcodeManager.sendInput("block");
       this._sendMoveAction("move_stop");
       const blockDuration = getBlockDuration(this._myStats.speed, this._oppStats.speed);
       this.time.delayedCall(blockDuration, () => {
@@ -245,7 +269,7 @@ export class FightScene extends Phaser.Scene {
     // ── Jump ──
     if (Phaser.Input.Keyboard.JustDown(up) && this._mySprite.body.blocked.down) {
       this._mySprite.setVelocityY(JUMP_VELOCITY);
-      wsManager.sendInput("jump");
+      netcodeManager.sendInput("jump");
     }
 
     // ── Attacks ──
@@ -315,7 +339,7 @@ export class FightScene extends Phaser.Scene {
     this._mySprite.setVelocityX(0);
     this._sendMoveAction("move_stop");
     this._playAnim(this._mySprite, this._myKey, type);
-    wsManager.sendInput(type);
+    netcodeManager.sendInput(type);
 
     this._applyDamageToOpponent(type);
 
@@ -333,7 +357,7 @@ export class FightScene extends Phaser.Scene {
       return;
     }
     this._lastSentMoveAction = action;
-    wsManager.sendInput(action);
+    netcodeManager.sendInput(action);
   }
 
   _applyDamageToOpponent(action) {
@@ -486,7 +510,7 @@ export class FightScene extends Phaser.Scene {
     this._oppSprite.setVelocityX(0);
     this._sendMoveAction("move_stop");
     const oppTeam = this._myTeam === 1 ? 2 : 1;
-    wsManager.sendRoundEnd(oppTeam);
+    rtcManager.send(JSON.stringify({ type: "round_end", data: { winner_team: oppTeam } }));
   }
 
   // ─── Round / Game events ───────────────────────────────────────────────────
@@ -634,7 +658,7 @@ export class FightScene extends Phaser.Scene {
     if (endBtn) {
       endBtn.classList.remove("hidden");
       endBtn.onclick = () => {
-        wsManager.disconnect();
+        rtcManager.disconnect();
         this._hideHud();
         // Remove invite param from URL before going to menu
         window.history.replaceState({}, "", window.location.pathname);
@@ -662,10 +686,7 @@ export class FightScene extends Phaser.Scene {
 
   shutdown() {
     this._hideHud();
-    wsManager
-      .off("opponent_input")
-      .off("round_result")
-      .off("game_over")
-      .off("opponent_disconnected");
+    // RtcManager cleanup is handled by disconnect() — no .off() needed.
+    // NetcodeManager has no cleanup method; buffer resets on next init().
   }
 }

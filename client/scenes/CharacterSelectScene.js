@@ -4,7 +4,7 @@ import { MAP_CONFIGS }       from "../config/maps.config.js";
 import { authManager }       from "../managers/auth.manager.js";
 import { modalManager }      from "../managers/modal.manager.js";
 import { gameService }       from "../services/game.service.js";
-import { wsManager }         from "../managers/ws.manager.js";
+import { rtcManager }      from "../managers/rtc.manager.js";
 
 /**
  * CharacterSelectScene — real-time simultaneous character selection.
@@ -90,7 +90,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     document.getElementById("btn-back-char-select").onclick = () => {
-      wsManager.disconnect();
+      rtcManager.disconnect();
       this._cleanup();
       this.scene.start("MenuScene");
     };
@@ -217,7 +217,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       // Hover → send to opponent
       card.addEventListener("mouseenter", () => {
         if (!this._myCharReady && this._wsConnected) {
-          wsManager.sendCharHover(char.id);
+          rtcManager.send(JSON.stringify({ type: "char_hover", data: { character_id: char.id } }));
         }
       });
 
@@ -237,7 +237,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this._refreshFightBtn();
 
     // Broadcast selection as hover too
-    if (this._wsConnected) wsManager.sendCharHover(id);
+    if (this._wsConnected) {
+      rtcManager.send(JSON.stringify({ type: "char_hover", data: { character_id: id } }));
+    }
     this._refreshFightBtn();
   }
 
@@ -411,14 +413,33 @@ export class CharacterSelectScene extends Phaser.Scene {
   // ─── WebSocket connection ──────────────────────────────────────────────────
 
   _connectWs() {
-    wsManager
-      .connect(this._gameId, authManager.getToken())
-      .on("waiting",             ()     => this._onWsWaiting())
-      .on("lobby_joined",        ()     => this._onLobbyJoined())
-      .on("opponent_char_hover", (data) => this._onOppHover(data))
-      .on("opponent_char_ready", (data) => this._onOppReady(data))
-      .on("game_start",          (data) => this._onGameStart(data))
-      .on("disconnect",          ()     => this._onDisconnect());
+    const peerId = this._isJoiner ? "p2" : "p1";
+    const isInitiator = !this._isJoiner;
+
+    rtcManager.init(this._gameId, peerId, isInitiator, (msg) => {
+      if (msg.type === "opponent_char_hover") {
+        this._onOppHover(msg.data);
+      } else if (msg.type === "opponent_char_ready") {
+        this._onOppReady(msg.data);
+      } else if (msg.type === "game_start") {
+        this._onGameStart(msg.data);
+      } else if (msg.type === "disconnect" || msg.type === "opponent_disconnected") {
+        this._onDisconnect();
+      }
+      // Note: "waiting" and "lobby_joined" were server-side states from the
+      // old WS room model. With P2P, the lobby flow is simpler — we just
+      // wait for the opponent's first char_hover/char_ready. The scene's
+      // existing _onWsWaiting / _onLobbyJoined handlers are fired locally
+      // below to preserve the UI flow.
+    });
+
+    // Fire the appropriate local lobby-status handler since P2P doesn't
+    // push these events from a server.
+    if (isInitiator) {
+      this._onWsWaiting();
+    } else {
+      this._onLobbyJoined();
+    }
 
     this._wsConnected = true;
   }
@@ -454,7 +475,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     if (!this._selectedCharId || !this._wsConnected || this._myCharReady) return;
     this._myCharReady = true;
 
-    wsManager.sendCharReady(this._selectedCharId);
+    rtcManager.send(JSON.stringify({ type: "char_ready", data: { character_id: this._selectedCharId } }));
 
     const fightBtn       = document.getElementById("btn-fight");
     fightBtn.disabled    = true;
