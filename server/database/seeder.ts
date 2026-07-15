@@ -72,5 +72,5 @@ if (import.meta.main) {
   await db.connect();
   await runMigrations();
   await runSeeds();
-  await db.disconnect();
+  await db.end();
 }

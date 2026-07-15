@@ -1,8 +1,17 @@
 import { db } from "./database.ts";
 
-export async function runMigrations() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS characters (
+/** Interface for the db methods migrations uses. */
+export interface DbLike {
+  query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
+}
+
+/**
+ * Run all migrations. Idempotent — safe to call multiple times.
+ * @param dbLike Optional db-like object (defaults to the real `db`). Used for testing.
+ */
+export async function runMigrations(dbLike: DbLike = db): Promise<void> {
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS characters (
       id         SERIAL PRIMARY KEY,
       name       TEXT  NOT NULL UNIQUE,
       health     INT   NOT NULL DEFAULT 100,
@@ -10,29 +19,23 @@ export async function runMigrations() {
       attack     FLOAT NOT NULL DEFAULT 1.0,
       defense    FLOAT NOT NULL DEFAULT 1.0,
       sprite_key TEXT  NOT NULL
-    )
-  `);
+    )`,
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS maps (
+    `CREATE TABLE IF NOT EXISTS maps (
       id         SERIAL PRIMARY KEY,
       name       TEXT  NOT NULL UNIQUE,
       sprite_key TEXT  NOT NULL
-    )
-  `);
+    )`,
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS players (
+    `CREATE TABLE IF NOT EXISTS players (
       id         SERIAL PRIMARY KEY,
       pseudo     TEXT  NOT NULL,
       token      TEXT  NOT NULL UNIQUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+    )`,
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS games (
+    `CREATE TABLE IF NOT EXISTS games (
       id           SERIAL PRIMARY KEY,
       type         TEXT NOT NULL CHECK (type IN ('1VS1', '2VS2', '1VSAI', '2VSAI')),
       status       TEXT NOT NULL CHECK (status IN ('pending', 'ongoing', 'finished')),
@@ -40,42 +43,43 @@ export async function runMigrations() {
       winning_team INT  CHECK (winning_team IN (1, 2)),
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+    )`,
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS game_players (
+    `CREATE TABLE IF NOT EXISTS game_players (
       id           SERIAL PRIMARY KEY,
       game_id      INT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
       player_id    INT REFERENCES players(id) ON DELETE SET NULL,
       character_id INT NOT NULL REFERENCES characters(id) ON DELETE RESTRICT,
       team         INT NOT NULL CHECK (team IN (1, 2))
-    )
-  `);
+    )`,
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS rounds (
+    `CREATE TABLE IF NOT EXISTS rounds (
       id          SERIAL PRIMARY KEY,
       game_id     INT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
       round       INT NOT NULL,
       winner_team INT CHECK (winner_team IN (1, 2)),
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+    )`,
 
-  // Allow duplicate pseudos — pseudo is a display name, not a unique identifier
-  await db.query(`
-    ALTER TABLE players
-    DROP CONSTRAINT IF EXISTS players_pseudo_key
-  `);
+    // Allow duplicate pseudos — pseudo is a display name, not a unique identifier
+    `ALTER TABLE players DROP CONSTRAINT IF EXISTS players_pseudo_key`,
 
+    `CREATE INDEX IF NOT EXISTS idx_players_token ON players(token)`,
+    `CREATE INDEX IF NOT EXISTS idx_games_status ON games(status)`,
+  ];
+
+  for (const stmt of statements) {
+    await dbLike.query(stmt);
+  }
   console.log("%cMigrations complete.", "color:green");
 }
 
 // Allows running directly: deno run database/migrations.ts
-// executes: connect → migrate → disconnect and run only if the file is run directly, not imported
 if (import.meta.main) {
   await db.connect();
-  await runMigrations();
-  await db.disconnect();
+  try {
+    await runMigrations();
+  } finally {
+    await db.end();
+  }
 }
