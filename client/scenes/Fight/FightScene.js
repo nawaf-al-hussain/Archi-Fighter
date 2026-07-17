@@ -192,7 +192,7 @@ export class FightScene extends Phaser.Scene {
             type: "input",
             data: { action: msg.data.action, frame: msg.data.frame ?? 0 },
           });
-        } else if (msg.type === "round_result") {
+        } else if (msg.type === "round_end") {
           this._onRoundResult(msg.data);
         } else if (msg.type === "game_over") {
           this._onGameOver(msg.data);

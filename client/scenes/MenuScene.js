@@ -104,7 +104,10 @@ export class MenuScene extends Phaser.Scene {
 
   _selectMode(mode) {
     modalManager.closeModal("modal-gamemode");
-    this.scene.start("CharacterSelectScene", { mode });
+    this.scene.start("CharacterSelectScene", {
+      mode,
+      pseudo: this.currentPlayer?.pseudo ?? "Player",
+    });
   }
 
   _bindMenuUiEvents() {

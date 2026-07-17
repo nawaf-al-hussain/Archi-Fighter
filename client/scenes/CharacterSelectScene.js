@@ -42,6 +42,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this._oppHoverCharId  = null;
     /** character_id the opponent has locked in (null = not yet) */
     this._oppLockedCharId = null;
+    this._myPseudo        = "Player";
+    this._oppPseudo       = "Opponent";
+    this._gameStarted     = false;
   }
 
   // ─── Phaser lifecycle ──────────────────────────────────────────────────────
@@ -50,6 +53,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this._reset();
     this._mode = data?.mode ?? "1VS1";
     this._isAiMode = this._mode === "1VSAI";
+    this._myPseudo = data?.pseudo ?? "Player";
 
     const params   = new URLSearchParams(window.location.search);
     const inviteId = params.get("invite");
@@ -417,20 +421,16 @@ export class CharacterSelectScene extends Phaser.Scene {
     const isInitiator = !this._isJoiner;
 
     rtcManager.init(this._gameId, peerId, isInitiator, (msg) => {
-      if (msg.type === "opponent_char_hover") {
+      if (msg.type === "char_hover") {
         this._onOppHover(msg.data);
-      } else if (msg.type === "opponent_char_ready") {
+      } else if (msg.type === "char_ready") {
         this._onOppReady(msg.data);
       } else if (msg.type === "game_start") {
-        this._onGameStart(msg.data);
+        // p2 receives game_start from p1 — set your_team and start FightScene
+        this._onGameStart({ ...msg.data, your_team: 2 });
       } else if (msg.type === "disconnect" || msg.type === "opponent_disconnected") {
         this._onDisconnect();
       }
-      // Note: "waiting" and "lobby_joined" were server-side states from the
-      // old WS room model. With P2P, the lobby flow is simpler — we just
-      // wait for the opponent's first char_hover/char_ready. The scene's
-      // existing _onWsWaiting / _onLobbyJoined handlers are fired locally
-      // below to preserve the UI flow.
     });
 
     // Fire the appropriate local lobby-status handler since P2P doesn't
@@ -475,7 +475,13 @@ export class CharacterSelectScene extends Phaser.Scene {
     if (!this._selectedCharId || !this._wsConnected || this._myCharReady) return;
     this._myCharReady = true;
 
-    rtcManager.send(JSON.stringify({ type: "char_ready", data: { character_id: this._selectedCharId } }));
+    rtcManager.send(JSON.stringify({
+      type: "char_ready",
+      data: { character_id: this._selectedCharId, pseudo: this._myPseudo },
+    }));
+
+    // If opponent already locked in, both are ready — initiator sends game_start
+    this._maybeStartGame();
 
     const fightBtn       = document.getElementById("btn-fight");
     fightBtn.disabled    = true;
@@ -557,13 +563,48 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   _onOppReady(data) {
     this._oppLockedCharId = data.character_id;
+    this._oppPseudo       = data.pseudo ?? "Opponent";
     this._oppHoverCharId  = null;
     this._refreshCardStates();
     this._refreshPreviewRow();
+
+    // If I've also locked in, both are ready — initiator sends game_start
+    this._maybeStartGame();
+  }
+
+  /**
+   * When both players have locked in their character, the initiator (p1)
+   * sends a game_start message with both players' info. The receiver (p2)
+   * gets it via the RTC data channel and starts their FightScene.
+   */
+  _maybeStartGame() {
+    if (!this._myCharReady || !this._oppLockedCharId) return;
+    if (this._gameStarted) return; // guard against double-start
+    this._gameStarted = true;
+
+    // Only the initiator (p1) sends game_start
+    if (!this._isJoiner) {
+      const payload = {
+        game_id: this._gameId,
+        map_id: this._selectedMapId,
+        // your_team is set per-recipient below
+        players: [
+          { team: 1, character_id: this._selectedCharId, pseudo: this._myPseudo },
+          { team: 2, character_id: this._oppLockedCharId, pseudo: this._oppPseudo },
+        ],
+      };
+      rtcManager.send(JSON.stringify({ type: "game_start", data: payload }));
+      // Start locally as team 1
+      this._onGameStart({ ...payload, your_team: 1 });
+    }
+    // p2 receives game_start via RTC → _onGameStart fires with your_team: 2
   }
 
   _onGameStart(data) {
     this._cleanup();
+
+    // Derive my team from my peer role if not explicitly set
+    const myTeam = data.your_team ?? (this._isJoiner ? 2 : 1);
 
     const players = (data.players ?? []).map((p) => {
       const charData = this._characters.find((c) => c.id === p.character_id);
@@ -581,7 +622,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     this.scene.start("FightScene", {
       game_id:   data.game_id,
-      your_team: data.your_team,
+      your_team: myTeam,
       map_key:   mapData?.sprite_key ?? "",
       players,
     });
