@@ -11,7 +11,7 @@ function makeCtx(origin: string | null) {
 }
 
 Deno.test("corsMiddleware reflects allowed origin", async () => {
-  Deno.env.set("ALLOWED_ORIGINS", "http://localhost:8080,https://archi-fighter.vercel.app");
+  Deno.env.set("ALLOWED_ORIGINS", "http://localhost:8080,https://arch-rivals.vercel.app");
   const ctx = makeCtx("http://localhost:8080");
   let nextCalled = false;
   await corsMiddleware(ctx, () => { nextCalled = true; });

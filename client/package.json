@@ -1,7 +1,7 @@
 {
-  "name": "archi-fighter-client",
+  "name": "arch-rivals-client",
   "version": "1.0.0",
-  "description": "Street fighter game with architects - client side",
+  "description": "Arch Rivals — street fighter game with architects - client side",
   "scripts": {
     "dev": "vite --port 8080",
     "build": "vite build",

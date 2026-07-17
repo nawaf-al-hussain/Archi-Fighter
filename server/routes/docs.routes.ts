@@ -17,7 +17,7 @@ router.get("/docs", (ctx) => {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Archi-Fighter API Docs</title>
+    <title>Arch Rivals API Docs</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
   </head>
   <body>

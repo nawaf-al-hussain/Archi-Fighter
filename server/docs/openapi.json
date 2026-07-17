@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Archi-Fighter API",
-    "description": "REST API for Archi-Fighter — a street fighter game featuring architect characters. Players are anonymous: register with a pseudo to receive a UUID token stored client-side, then use it to authenticate.",
+    "title": "Arch Rivals API",
+    "description": "REST API for Arch Rivals — a street fighter game featuring architect characters. Players are anonymous: register with a pseudo to receive a UUID token stored client-side, then use it to authenticate.",
     "version": "1.0.0",
     "contact": {
       "email": "contact@pauljaguin.com"
@@ -136,7 +136,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": { "type": "string", "example": "Archi-Fighter Server" },
+                    "message": { "type": "string", "example": "Arch Rivals Server" },
                     "status":  { "type": "string", "example": "running" },
                     "client":  { "type": "string", "example": "http://localhost:8080" }
                   }

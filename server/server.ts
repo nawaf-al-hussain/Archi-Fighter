@@ -41,7 +41,7 @@ app.use(corsMiddleware);
 app.use(docsRouter.routes());
 app.use(apiRouter.routes());
 
-console.log("Archi-Fighter server ready");
+console.log("Arch Rivals server ready");
 
 // Local dev: deno task dev runs server.ts directly → call listen()
 // Deno Deploy: entry.ts imports `app` and calls Deno.serve(app.handle)

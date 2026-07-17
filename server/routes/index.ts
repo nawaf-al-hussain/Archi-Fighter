@@ -15,7 +15,7 @@ const apiRouter = new Router({ prefix: "/api/v1" });
 
 apiRouter.get("/", (ctx) => {
   ctx.response.body = {
-    message: "Archi-Fighter API is running!",
+    message: "Arch Rivals API is running!",
     status: "running",
     client: `http://localhost:${clientPort}`,
         docs: `http://localhost:${serverPort}/api/v1/docs`

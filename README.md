@@ -1,5 +1,5 @@
-# Archi-Fighter
-That is a street fighter like game involving architects. Using lightweight framework in js 
+# Arch Rivals
+A street fighter like game involving architects. Built with lightweight JS frameworks.
 
 # Technologies used:
 Frontend: Phaser
@@ -29,12 +29,12 @@ curl -fsSL https://deno.land/install.sh | sh
 
 1. Clone the repository:
 ```
-git clone https://github.com/UnMugViolet/Archi-Fighter.git
+git clone https://github.com/nawaf-al-hussain/arch-rivals.git
 ```
 
 2. Navigate to the project directory:
 ```
-cd Archi-Fighter
+cd arch-rivals
 ```
 
 3. Start the server and client:
@@ -121,7 +121,7 @@ If you have any questions, suggestions, or want to get in touch, feel free to re
 
 ## Deploy
 
-Archi-Fighter runs on three free-tier services. No credit card required for any of them.
+Arch Rivals runs on three free-tier services. No credit card required for any of them.
 
 ### 1. Neon (Postgres)
 
@@ -136,7 +136,7 @@ Archi-Fighter runs on three free-tier services. No credit card required for any 
 3. Set the entry point to `server/entry.ts`.
 4. Add environment variables in the Deploy dashboard:
    - `DATABASE_URL` = your Neon pooled connection string
-   - `ALLOWED_ORIGINS` = `https://YOUR-VERCEL-URL.vercel.app,http://localhost:8080`
+   - `ALLOWED_ORIGINS` = `https://YOUR-VERCEL-URL.vercel.app,http://localhost:8080` (e.g. `https://arch-rivals.vercel.app`)
 5. Deploy.
 
 ### 3. Vercel (client)

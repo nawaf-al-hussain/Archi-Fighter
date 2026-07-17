@@ -10,7 +10,7 @@ import { mobileManager }        from "./managers/mobile.manager.js";
 // Not playable on mobile, mobile may be added in the future.
 if (mobileManager.isMobile()) {
   mobileManager.displayMobileMessage(
-    "Sorry, Archi-Fighter is not available on mobile yet. <br/> Contribute on <a href=\"https://github.com/UnMugViolet/Archi-Fighter.git\" target=\"_blank\" >GitHub</a> to help make it happen!");
+    "Sorry, Arch Rivals is not available on mobile yet. <br/> Contribute on <a href=\"https://github.com/nawaf-al-hussain/arch-rivals\" target=\"_blank\" >GitHub</a> to help make it happen!");
 } else {
 
   const config = {

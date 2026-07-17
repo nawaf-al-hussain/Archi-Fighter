@@ -21,7 +21,7 @@ jobs:
       - name: Run migrations
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          ALLOWED_ORIGINS: "https://archi-fighter.vercel.app"
+          ALLOWED_ORIGINS: "https://arch-rivals.vercel.app"
         run: |
           cd server
           deno run --allow-net --allow-read --allow-env database/migrations.ts
@@ -29,7 +29,7 @@ jobs:
       - name: Run seeders (idempotent)
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          ALLOWED_ORIGINS: "https://archi-fighter.vercel.app"
+          ALLOWED_ORIGINS: "https://arch-rivals.vercel.app"
         run: |
           cd server
           deno run --allow-net --allow-read --allow-env database/seeder.ts

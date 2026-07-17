@@ -1,4 +1,4 @@
-const TOKEN_KEY  = "archi_fighter_token";
+const TOKEN_KEY  = "arch_rivals_token";
 
 export const authManager = {
   /** @returns {string|null} */
