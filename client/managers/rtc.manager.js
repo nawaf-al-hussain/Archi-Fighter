@@ -178,6 +178,11 @@ class RtcManager {
     this._onMessage = null;
     this._pollTimer = null;
     this._iceTimeout = null;
+    // Reset all per-game state so a new game doesn't inherit stale values
+    this._gameId = null;
+    this._peerId = null;
+    this._isInitiator = false;
+    this._lastPollTs = 0;
   }
 }
 
